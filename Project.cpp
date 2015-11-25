@@ -17,6 +17,40 @@ const int VERT = 0;  // analog input
 const int HORIZ = 1; // analog input
 const int SEL = 9;   // digital input 
 
+void menu(){
+  
+}
+
+void gameTimeStart(){
+
+}
+
+void gameTimeCalculate(){
+  
+}
+
+void scoring(){
+  
+}
+
+void winLose(bool val){
+  
+}
+
+void pointBall(){
+  
+}
+
+bool collision(){
+  
+}
+
+
+
+void snake(){
+  
+}
+
 
 int main(){
   //stuff go here
