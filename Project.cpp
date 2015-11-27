@@ -49,10 +49,6 @@ void winLose(bool val){
   
 }
 
-void pointBall(){
-  
-}
-
 bool collision(){
   
 }
@@ -62,12 +58,22 @@ bool collision(){
 void snake(){
   //Initialize screen/map
   
-  //Create snakes
-  int snake[50][50];
-  //int snake2[50][50];
+  int size = 50; //Snake maximum possible length
   
-  //Spawn random dot
+  //Create snakes - 2d array
+  //call with snakeCli[i][j]
+  int** snakeCli = malloc(sizeof(int*)*size);
+  int** snakeSrv = malloc(sizeof(int*)*size);
+  for(int i = 0; i < size; ++i){
+    int* snakeCli[i] = malloc(size*sizeof(int));
+    int* snakeSrv[i] = malloc(size*sizeof(int));
+  }
   
+  //Spawn random dot, give coordinates
+  int dotX;
+  int dotY;
+  
+  randomDot(&dotX, &dotY);
   //3 2 1 GO!
   
   //Start snakes
@@ -77,6 +83,26 @@ void snake(){
   
 }
 
+void pointDot(int* X, int* Y){
+  
+  randomDot();
+}
+
+void randomDot(int* X, int* Y){
+  for(int i = 0; i < 4; ++i){//Four loops
+    *X += analogRead(3);
+    *Y += analogRead(3);
+  }
+  //Loop again, but range is only 0 to 4
+  *X += analogRead(3)/2;
+  if(*X < 40){
+    *X = 40; 
+  }
+  *Y += analogRead(3)/2;
+  if(*Y < 40){
+    *Y = 40; 
+  }
+}
 
 int main(){
   //stuff go here
@@ -86,6 +112,8 @@ int main(){
   tft.initR(INITR_BLACKTAB);
   
   Serial.begin(9600);
+  
+  randomSeed(analogRead(4));
   
   //srv/cli part, needs to be in the main
   //setup pin
