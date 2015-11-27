@@ -20,19 +20,54 @@ const int SEL = 9;   // digital input
 //Define the tft
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 
+void sendChar(char msg){
+  //Start = S
+  //Sync = N
+  //Up = U
+  //Down = D
+  //Left = L
+  //Right = R
+  
+  Serial3.write(msg);
+  //debug
+  //Serial.print("msg sent: "); Serial.println('msg');
+}
+
+bool listen(char c){
+  if(waitOnSerial3(1,1000)){
+    char msg = Serial3.read();
+    //debug
+    //Serial.print("msg heard: "); Serial.println('msg');
+    if(msg == c){
+      return true;
+    }
+  }
+  return false;
+}
+
 void menuSrv(){
-  //menu with start selection and 
-  snake();
+  tft.fillScreen(0x0000);
+  tft.setCursor(54,76);
+  tft.setTextColor(0xFFFF, 0x0000);
+  tft.print("START");
+  while(true){ //when not pressed
+    if(digitalRead(SEL) == 1){
+      sendChar('S');
+      snake();
+    }
+    delay(50);
+  }
 }
 
 void menuCli(){//done
   bool start = FALSE;
   while(start == FALSE){
-    //wait for srv to start game
-    delay(100);
+    listen('S');
+    delay(10);
   }
   snake();
 }
+
 void gameTimeStart(){
 
 }
@@ -59,7 +94,7 @@ bool collision(){
 
 
 
-void snake(){
+void snake(){//up = N down = S left = W right = E
   //Initialize screen/map
   
   //Create snakes
