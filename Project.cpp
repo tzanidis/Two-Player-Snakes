@@ -20,10 +20,19 @@ const int SEL = 9;   // digital input
 //Define the tft
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 
-void menu(){
-  
+void menuSrv(){
+  //menu with start selection and 
+  snake();
 }
 
+void menuCli(){//done
+  bool start = FALSE;
+  while(start == FALSE){
+    //wait for srv to start game
+    delay(100);
+  }
+  snake();
+}
 void gameTimeStart(){
 
 }
