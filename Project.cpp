@@ -17,6 +17,9 @@ const int VERT = 0;  // analog input
 const int HORIZ = 1; // analog input
 const int SEL = 9;   // digital input 
 
+//Define the tft
+Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
+
 void menu(){
   
 }
@@ -48,6 +51,20 @@ bool collision(){
 
 
 void snake(){
+  //Initialize screen/map
+  
+  //Create snakes
+  int snake[50][50];
+  //int snake2[50][50];
+  
+  //Spawn random dot
+  
+  //3 2 1 GO!
+  
+  //Start snakes
+  while(!collision()){
+    
+  }
   
 }
 
@@ -55,10 +72,11 @@ void snake(){
 int main(){
   //stuff go here
   
+  init();
   
+  tft.initR(INITR_BLACKTAB);
   
-  
-  
+  Serial.begin(9600);
   
   //srv/cli part, needs to be in the main
   //setup pin
@@ -73,4 +91,6 @@ int main(){
     Serial.println("pin low cli");
     function(); // call appropriate functions
   }
+  
+  Serial.end();
 }
