@@ -63,7 +63,7 @@ void startUp(){
   fillRect(108, 20, 120, 4, 0xFFFF);
   
   //Initialize snakes
-  initSnake();
+  //initSnake();
   
   //Draw player ID
   tft.setCursor(29,10);
@@ -137,12 +137,10 @@ void menuCli(){//done
   startUp();
 }
 
-void scoring(){
-  
-}
-
+//Winlose is called inside time and collision, val decides winner: 0 is server, 1 is client
 void winLose(bool val){
   
+  //Text for hit the reset key
 }
 
 bool collision(Snake* snakeCli, Snake* snakeSrv){
@@ -152,6 +150,7 @@ bool collision(Snake* snakeCli, Snake* snakeSrv){
     ||(snakeCli->y[snakeCli->head]<0)
     ||(snakeCli->y[snakeCli->head]>39)){
         //Snake client hit a wall
+        winLose(0);
         return true;
     }
     if((snakeSrv->x[snakeSrv->head]<0)
@@ -159,6 +158,7 @@ bool collision(Snake* snakeCli, Snake* snakeSrv){
     ||(snakeSrv->y[snakeSrv->head]<0)
     ||(snakeSrv->y[snakeSrv->head]>39)){
         //Snake server hit a wall
+        winLose(1);
         return true;
     }
     
@@ -169,6 +169,7 @@ bool collision(Snake* snakeCli, Snake* snakeSrv){
         if(snakeCli->x[snakeCli->head]==snakeSrv->x[tempTail] //Checks x
         &&snakeCli->y[snakeCli->head]==snakeSrv->y[tempTail]){ //Checks y
         //If both are true, then snake collision is true
+            winLose(0);
             return true;
         }
         ++tempTail;
@@ -180,6 +181,7 @@ bool collision(Snake* snakeCli, Snake* snakeSrv){
         if(snakeSrv->x[snakeSrv->head]==snakeCli->x[tempTail] //Checks x
         &&snakeSrv->y[snakeSrv->head]==snakeCli->y[tempTail]){ //Checks y
         //If both are true, then snake collision is true
+            winLose(1);
             return true;
         }
         ++tempTail;
@@ -197,7 +199,7 @@ void pointDot(int* X, int* Y){
 void randomDot(int* X, int* Y){
     *X = analogRead(3) * 4;
     *Y = analogRead(3) * 4;
-  }
+  
   //Loop again, but range is only 0 to 4
   *X += analogRead(3)/2;
   if(*X > 40){
@@ -214,6 +216,7 @@ void randomDot(int* X, int* Y){
 bool time(int* iTime){
     int tempTime = millis();
     if((tempTime-iTime)>90000){ //Constant timeout of 1 minute and 30 seconds
+        //TODO: Point system
         return true;
     }
     return false;
@@ -245,11 +248,13 @@ void snake(){//up = N down = S left = W right = E
   
   //Start snakes
   while(!collision(snakeCli,snakeSrv)&&!time(&iTime)){
-    
+       //Put snake code in here - That means moving snakes
+       
   }
   
 }
 
+//Function to start 
 int main(){
   //stuff go here
   
