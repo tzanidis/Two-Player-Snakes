@@ -84,8 +84,48 @@ void winLose(bool val){
   
 }
 
-bool collision(){
-  
+bool collision(Snake* snakeCli, Snake* snakeSrv){
+    //Check for walls
+    if((snakeCli->x[snakeCli->head]<0)
+    ||(snakeCli->x[snakeCli->head]>39)
+    ||(snakeCli->y[snakeCli->head]<0)
+    ||(snakeCli->y[snakeCli->head]>39)){
+        //Snake client hit a wall
+        return true;
+    }
+    if((snakeSrv->x[snakeSrv->head]<0)
+    ||(snakeSrv->x[snakeSrv->head]>39)
+    ||(snakeSrv->y[snakeSrv->head]<0)
+    ||(snakeSrv->y[snakeSrv->head]>39)){
+        //Snake server hit a wall
+        return true;
+    }
+    
+    //Check for collision with other snake
+    //Snake client's head into other snake
+    int tempTail = snakeSrv->tail;
+    while(tempTail!=(snakeSrv->head)+1){
+        if(snakeCli->x[snakeCli->head]==snakeSrv->x[tempTail] //Checks x
+        &&snakeCli->y[snakeCli->head]==snakeSrv->y[tempTail]){ //Checks y
+        //If both are true, then snake collision is true
+            return true;
+        }
+        ++tempTail;
+    }
+    
+    //Snake server's head into other snake
+    tempTail = snakeCli->tail;
+    while(tempTail!=(snakeCli->head)+1){
+        if(snakeSrv->x[snakeSrv->head]==snakeCli->x[tempTail] //Checks x
+        &&snakeSrv->y[snakeSrv->head]==snakeCli->y[tempTail]){ //Checks y
+        //If both are true, then snake collision is true
+            return true;
+        }
+        ++tempTail;
+    }
+    
+    //No collision
+    return false;
 }
 
 void pointDot(int* X, int* Y){
@@ -128,10 +168,10 @@ void snake(){//up = N down = S left = W right = E
   assert(snakeCli != NULL);
   assert(snakeSrv != NULL);
   //Position snakes
-  snakeSrv->x = {1,2,3,4,5};
-  snakeSrv->y = {1,1,1,1,1};
-  snakeCli->x = {38,37,36,35,34};
-  snakeCli->y = {38,38,38,38,38};
+  snakeSrv->x = {2,3,4,5,6};
+  snakeSrv->y = {2,2,2,2,2};
+  snakeCli->x = {37,36,35,34,33};
+  snakeCli->y = {37,37,37,37,37};
   
   //Spawn random dot, give coordinates
   int dotX;
@@ -143,7 +183,7 @@ void snake(){//up = N down = S left = W right = E
   int iTime = millis(); //Initial time
   
   //Start snakes
-  while(!collision()&&!time(&iTime)){
+  while(!collision(snakeCli,snakeSrv)&&!time(&iTime)){
     
   }
   
