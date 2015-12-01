@@ -99,8 +99,29 @@ void startUp(){
   snake();
 }
 
+int randomDotX(){
+    int x = analogRead(3) * 4;
+    //Loop again, but range is only 0 to 4
+    x += analogRead(3)/2;
+    if(x > 40){
+        x = 40; 
+    }
+    return (x * 3);
+}
+
+int randomDotY(){
+    int y = analogRead(3) * 4;
+    //Loop again, but range is only 0 to 4
+    y += analogRead(3)/2;
+    if(y > 40){
+        y = 40; 
+    }
+    return (y * 3);
+}
+
 void pointDot(){//get rand spot draw dot
-  
+  int x = randomDotX();
+  int y = randomDotY();
   fillCircle(x, y, 2, 0xFFFF);
 }
 
@@ -118,9 +139,9 @@ void menuSrv(){
     }
     delay(50);
   }
-}
+}//Done
 
-void menuCli(){//done
+void menuCli(){
   tft.fillScreen(0x0000);
   tft.setTextColor(0xFFFF, 0x0000);
   tft.setCursor(0,0);
@@ -131,8 +152,7 @@ void menuCli(){//done
   tft.print("For Host");
   bool start = FALSE;
   while(start == FALSE){
-    listen('S');
-    delay(10);
+    start = listen('S');
   }
   startUp();
 }
@@ -189,26 +209,6 @@ bool collision(Snake* snakeCli, Snake* snakeSrv){
     
     //No collision
     return false;
-}
-
-void pointDot(int* X, int* Y){
-  
-  randomDot(X,Y);
-}
-
-void randomDot(int* X, int* Y){
-    *X = analogRead(3) * 4;
-    *Y = analogRead(3) * 4;
-  
-  //Loop again, but range is only 0 to 4
-  *X += analogRead(3)/2;
-  if(*X > 40){
-    *X = 40; 
-  }
-  *Y += analogRead(3)/2;
-  if(*Y > 40){
-    *Y = 40; 
-  }
 }
 
 //Bool time FeelsBadMan
