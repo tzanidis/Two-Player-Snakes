@@ -45,27 +45,88 @@ bool listen(char c){
   return false;
 }
 
+void startUp(){
+  tft.setTextColor(0xFFFF, 0x0000);
+  
+  //Draw boundaries
+  fillRect(16, 0, 4, 128, 0xFFFF);
+  fillRect(140, 0, 4, 128, 0xFFFF);
+  fillRect(0, 20, 120, 4, 0xFFFF);
+  fillRect(108, 20, 120, 4, 0xFFFF);
+  
+  //Initialize snakes
+  initSnake();
+  
+  //Draw player ID
+  tft.setCursor(29,10);
+  tft.print("HOST SNAKE");
+  tft.setCursor(131,70);
+  tft.print("CLIENT SNAKE");
+  
+  //pointDot();
+  pointDot();
+  
+  //3,2,1,GO
+  tft.setCursor(0,62);
+  tft.print("3");
+  delay(900);
+  fillRect(0, 62, 4, 8, 0x0000);
+  tft.print("2");
+  delay(900);
+  fillRect(0, 62, 4, 8, 0x0000);
+  tft.print("1");
+  delay(900);
+  tft.setCursor(0,60);
+  fillRect(0, 62, 4, 8, 0x0000);
+  
+  //Clear player ID
+  fillRect(29, 10, 40, 8, 0x0000);
+  fillRect(131, 70, 48, 8, 0x0000);
+  
+  tft.print("GO");
+  fillRect(0, 60, 8, 8, 0x0000);
+  delay(50);
+  
+  //Start game
+  snake();
+}
+
+void pointDot(){//get rand spot draw dot
+  
+  fillCircle(x, y, 2, 0xFFFF);
+}
+
 void menuSrv(){
   tft.fillScreen(0x0000);
-  tft.setCursor(54,76);
   tft.setTextColor(0xFFFF, 0x0000);
+  tft.setCursor(0,0);
+  tft.print("host");
+  tft.setCursor(54,76);
   tft.print("START");
   while(true){ //when not pressed
     if(digitalRead(SEL) == 1){
       sendChar('S');
-      snake();
+      startUp();
     }
     delay(50);
   }
 }
 
 void menuCli(){//done
+  tft.fillScreen(0x0000);
+  tft.setTextColor(0xFFFF, 0x0000);
+  tft.setCursor(0,0);
+  tft.print("client");
+  tft.setCursor(50,72);
+  tft.print("Waiting");
+  tft.setCursor(58,70);
+  tft.print("For Host");
   bool start = FALSE;
   while(start == FALSE){
     listen('S');
     delay(10);
   }
-  snake();
+  startUp();
 }
 
 void gameTimeStart(){
