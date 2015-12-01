@@ -20,6 +20,14 @@ const int SEL = 9;   // digital input
 //Define the tft
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 
+typedef struct {//size is 50 by default
+    int* x[50];
+    int* y[50];
+    int head = 4;
+    int tail = 0;
+    int length = 5;
+} Snake;
+
 void sendChar(char msg){
   //Start = S
   //Sync = N
@@ -68,14 +76,6 @@ void menuCli(){//done
   snake();
 }
 
-void gameTimeStart(){
-
-}
-
-void gameTimeCalculate(){
-  
-}
-
 void scoring(){
   
 }
@@ -85,47 +85,6 @@ void winLose(bool val){
 }
 
 bool collision(){
-  
-}
-
-//Bool time FeelsBadMan
-//Returns true if time is up, otherwise return false
-bool time(int* iTime){
-    int tempTime = millis();
-    if((tempTime-iTime)>90000){
-        return true;
-    }
-    return false;
-}
-
-//Main game function, runs the entire game
-void snake(){//up = N down = S left = W right = E
-  //Initialize screen/map
-  
-  int size = 50; //Snake maximum possible length
-  
-  //Create snakes - 2d array
-  //call with snakeCli[i][j]
-  int** snakeCli = malloc(sizeof(int*)*size);
-  int** snakeSrv = malloc(sizeof(int*)*size);
-  for(int i = 0; i < size; ++i){
-    int* snakeCli[i] = malloc(size*sizeof(int));
-    int* snakeSrv[i] = malloc(size*sizeof(int));
-  }
-  
-  //Spawn random dot, give coordinates
-  int dotX;
-  int dotY;
-  
-  randomDot(&dotX, &dotY);
-  //3 2 1 GO! Enter startup function
-  
-  int iTime = millis();
-  
-  //Start snakes
-  while(!collision()&&!time(&iTime)){
-    
-  }
   
 }
 
@@ -147,6 +106,47 @@ void randomDot(int* X, int* Y){
   if(*Y > 40){
     *Y = 40; 
   }
+}
+
+//Bool time FeelsBadMan
+//Returns true if time is up, otherwise return false
+bool time(int* iTime){
+    int tempTime = millis();
+    if((tempTime-iTime)>90000){ //Constant timeout of 1 minute and 30 seconds
+        return true;
+    }
+    return false;
+}
+
+//Main game function, runs the entire game
+void snake(){//up = N down = S left = W right = E
+  
+  //Create snakes - 2d array
+  //call with snakeCli[i][j]
+  Snake* snakeCli = malloc(sizeof(Snake));
+  Snake* snakeSrv = malloc(sizeof(Snake));
+  assert(snakeCli != NULL);
+  assert(snakeSrv != NULL);
+  //Position snakes
+  snakeSrv->x = {1,2,3,4,5};
+  snakeSrv->y = {1,1,1,1,1};
+  snakeCli->x = {38,37,36,35,34};
+  snakeCli->y = {38,38,38,38,38};
+  
+  //Spawn random dot, give coordinates
+  int dotX;
+  int dotY;
+  
+  randomDot(&dotX, &dotY);
+  //3 2 1 GO! Enter startup function
+  
+  int iTime = millis(); //Initial time
+  
+  //Start snakes
+  while(!collision()&&!time(&iTime)){
+    
+  }
+  
 }
 
 int main(){
