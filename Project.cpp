@@ -124,9 +124,8 @@ void pointDot(int* X, int* Y){
 }
 
 void randomDot(int* X, int* Y){
-  for(int i = 0; i < 4; ++i){//Four loops
-    *X += analogRead(3);
-    *Y += analogRead(3);
+    *X = analogRead(3) * 4;
+    *Y = analogRead(3) * 4;
   }
   //Loop again, but range is only 0 to 4
   *X += analogRead(3)/2;
