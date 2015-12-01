@@ -88,8 +88,17 @@ bool collision(){
   
 }
 
+//Bool time FeelsBadMan
+//Returns true if time is up, otherwise return false
+bool time(int* iTime){
+    int tempTime = millis();
+    if((tempTime-iTime)>90000){
+        return true;
+    }
+    return false;
+}
 
-
+//Main game function, runs the entire game
 void snake(){//up = N down = S left = W right = E
   //Initialize screen/map
   
@@ -109,10 +118,12 @@ void snake(){//up = N down = S left = W right = E
   int dotY;
   
   randomDot(&dotX, &dotY);
-  //3 2 1 GO!
+  //3 2 1 GO! Enter startup function
+  
+  int iTime = millis();
   
   //Start snakes
-  while(!collision()){
+  while(!collision()&&!time(&iTime)){
     
   }
   
@@ -120,7 +131,7 @@ void snake(){//up = N down = S left = W right = E
 
 void pointDot(int* X, int* Y){
   
-  randomDot();
+  randomDot(X,Y);
 }
 
 void randomDot(int* X, int* Y){
@@ -129,11 +140,11 @@ void randomDot(int* X, int* Y){
   }
   //Loop again, but range is only 0 to 4
   *X += analogRead(3)/2;
-  if(*X < 40){
+  if(*X > 40){
     *X = 40; 
   }
   *Y += analogRead(3)/2;
-  if(*Y < 40){
+  if(*Y > 40){
     *Y = 40; 
   }
 }
