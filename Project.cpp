@@ -39,7 +39,7 @@ void sendChar(char msg){
   Serial3.write(msg);
   //debug
   //Serial.print("msg sent: "); Serial.println('msg');
-}
+}//Done
 
 bool listen(char c){
   if(waitOnSerial3(1,1000)){
@@ -51,7 +51,7 @@ bool listen(char c){
     }
   }
   return false;
-}
+}//Done
 
 void startUp(){
   tft.setTextColor(0xFFFF, 0x0000);
@@ -97,7 +97,7 @@ void startUp(){
   
   //Start game
   snake();
-}
+}//Almost
 
 int randomDotX(){
     int x = analogRead(3) * 4;
@@ -106,8 +106,8 @@ int randomDotX(){
     if(x > 40){
         x = 40; 
     }
-    return (x * 3);
-}
+    return x;
+}//Done
 
 int randomDotY(){
     int y = analogRead(3) * 4;
@@ -116,14 +116,14 @@ int randomDotY(){
     if(y > 40){
         y = 40; 
     }
-    return (y * 3);
-}
+    return y;
+}//Done
 
 void pointDot(){//get rand spot draw dot
   int x = randomDotX();
   int y = randomDotY();
-  fillCircle(x, y, 2, 0xFFFF);
-}
+  fillCircle(((x*3)/2)+20.5, ((y*3)/2)+4.5, 2, 0xFFFF);
+}//Done
 
 void menuSrv(){
   tft.fillScreen(0x0000);
@@ -155,13 +155,26 @@ void menuCli(){
     start = listen('S');
   }
   startUp();
-}
+}//Done
 
 //Winlose is called inside time and collision, val decides winner: 0 is server, 1 is client
 void winLose(bool val){
-  
-  //Text for hit the reset key
-}
+  tft.fillScreen(0x0000);
+  if(val == TRUE){//Host? cli?
+      tft.setCursor(56,72);
+      tft.print("Host");
+      tft.setCursor(54,80);
+      tft.print("Wins!");
+  }else{
+      tft.setCursor(56,72);
+      tft.print("Client");
+      tft.setCursor(54,80);
+      tft.print("Wins!");
+  }
+  //Tell to press reset key
+  tft.setCursor(0,152);
+  tft.print("Press Reset");
+}//Done
 
 bool collision(Snake* snakeCli, Snake* snakeSrv){
     //Check for walls
