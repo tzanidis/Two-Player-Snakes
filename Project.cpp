@@ -23,10 +23,10 @@ Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 typedef struct {//size is 50 by default
     int* x[50];
     int* y[50];
-    int head = 4;
-    int tail = 0;
-    int length = 5;
-    char delay = 'Y'; //For eating the point dot, Y is yes, N is no
+    int head;//4
+    int tail;//0
+    int length//5;
+    char delay; // 'Y' For eating the point dot, Y is yes, N is no
 } Snake;
 
 void sendChar(char msg){
@@ -100,214 +100,6 @@ void pointDot(int* x, int* y){
   Serial.print("point generated at x: "); Serial.print(*x);Serial.print(" and y: ");Serial.println(*y);
  }
 
-//Startup()
-//After client and server are set up, initialize screen, board, and snake.
-//Run snake() as last statement
-void startUp(){
-  tft.setTextColor(0xFFFF, 0x0000);
-  
-  //Draw boundaries
-  //debug
-  Serial.println("Drawing boundaries");
-  fillRect(0, 16, 128, 4, 0xFFFF);
-  fillRect(0, 140, 128, 4, 0xFFFF);
-  fillRect(20, 0, 4, 120, 0xFFFF);
-  fillRect(20, 108, 4, 120, 0xFFFF);
-  
-  //Draw player ID
-  //debug
-  Serial.println("Drawing player ID");
-  tft.setCursor(10,29);
-  tft.print("HOST SNAKE");
-  tft.setCursor(70,131);
-  tft.print("CLIENT SNAKE");
-  
-  //pointDot();
-  //debug
-  Serial.println("Make start dot");
-  int x,y;
-  pointDot(&x,&y);
-  
-  //3,2,1,GO
-  //debug
-  Serial.println("Draw Countdown");
-  tft.setCursor(62,0);
-  tft.print("3");
-  delay(950);
-  fillRect(62, 0, 8, 4, 0x0000);
-  tft.print("2");
-  delay(950);
-  fillRect(62, 0, 8, 4, 0x0000);
-  tft.print("1");
-  delay(950);
-  tft.setCursor(60,0);
-  fillRect(62, 0, 8, 4, 0x0000);
-  
-  //Clear player ID
-  fillRect(10, 29, 8, 40, 0x0000);
-  fillRect(70, 131, 8, 48, 0x0000);
-  
-  tft.print("GO");
-  fillRect(60, 0, 8, 8, 0x0000);
-  delay(50);
-  
-  //Start game
-  //debug
-  Serial.println("Call snake / Start game");
-  snake(&x,&y);
-}//Done
-
-//Menu for server
-//Change in text from menuCli
-void menuSrv(){
-  //debug
-  Serial.print("Draw menu for srv");
-  tft.fillScreen(0x0000);
-  tft.setTextColor(0xFFFF, 0x0000);
-  tft.setCursor(0,0);
-  tft.print("host");
-  tft.setCursor(54,76);
-  tft.print("START");
-  while(true){ //when not pressed
-    if(digitalRead(SEL) == 1){
-      //debug
-      Serial.println("Start pressed");
-      sendChar('S');
-      delay(50);
-      //debug
-      Serial.println("Call startup");
-      startUp();
-    }
-    delay(50);
-  }
-}//Done
-
-//Menu for client
-//Change in text from menuSrv
-void menuCli(){
-  tft.fillScreen(0x0000);
-  tft.setTextColor(0xFFFF, 0x0000);
-  tft.setCursor(0,0);
-  tft.print("client");
-  tft.setCursor(50,72);
-  tft.print("Waiting");
-  tft.setCursor(58,70);
-  tft.print("For Host");
-  bool start = FALSE;
-  while(start == FALSE){
-    start = listen('S');
-  }
-  Serial.println("Start heard");
-  Serial.println("Call startup");
-  startUp();
-}//Done
-
-//Winlose is called inside collision(), or after time() returns true 
-//val decides winner: 0 is server, 1 is client, 2 is tie
-void winLose(int val){
-  tft.fillScreen(0x0000);
-  if(val == 1){//srv win
-      Serial.println("Host / Srv wins");
-      tft.setCursor(72,56);
-      tft.print("Host");
-      tft.setCursor(80,54);
-      tft.print("Wins!");
-  }else if(val == 0){//cli win
-      Serial.println("Client wins");
-      tft.setCursor(72,52);
-      tft.print("Client");
-      tft.setCursor(80,54);
-      tft.print("Wins!");
-  }else{//tie
-      Serial.println("Tie");
-      tft.setCursor(72,52);
-      tft.print("It's a");
-      tft.setCursor(80,56);
-      tft.print("Tie!");
-      
-  }
-  //Tell to press reset key
-  tft.setCursor(152,0);
-  tft.print("Press Reset");
-  Serial.println("Draw Screen, tell to reset.");
-}//Done
-
-// syncSrv()
-// sends and receives characters as the server arduino
-// argument: character, returns character
-char syncSrv(char mov){
-    typedef enum {SEND, WFR, STL, LIS, STD, ERR }State; //send, wait for received, send that listening, listen, wait for done. 
-    State state = SEND;
-    char otherPlayerMov;
-    
-    while((state != STD) || (state !=ERR)){
-        if(state == SEND){
-            sendChar(mov);
-            Serial.print("state = WFR");
-            state = WFR;
-        }else if(state == WFR){
-            if(listen('A')){
-                Serial.println("state = LIS");
-                state = LIS;
-            }else{
-                Serial.println("state = SEND");
-                state = SEND;
-            }
-        }else if(state == LIS){
-            otherPlayerMov = listenDir();
-            if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R'){
-                Serial.println("state = STD");
-                send('A');
-                state = STD;
-            }
-        }else{
-            Serial.println("state = ERR");
-            state = ERR;
-        }
-    }
-    Serial.println("Sync done");
-    Serial.print("other players movement: ");Serial.println(otherPlayerMov);
-    return otherPlayerMov;
-}
-
-// syncCli()
-// sends and receives characters as the client arduino
-// argument: character, returns character
-char syncCli(char mov){
-    typedef enum {LIS, WFR, SEND, D, ERR }State; //listen for their move / send that received, send our move, wait for received, tell done 
-    State state = SEND;
-    char otherPlayerMov;
-    
-    while((state != D) || (state !=ERR)){
-        if(state == LIS){
-            otherPlayerMov = listenDir();
-            if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R'){
-                Serial.println("state = SEND");
-                send('A');
-                state = SEND;
-            }
-        }else if(state == SEND){
-            sendChar(mov);
-            Serial.println("state = WFR");
-            state = WFR;
-        }else if(state == WFR){
-            if(listen('A')){
-                Serial.println("state = D");
-                state = D;
-            }else{
-                Serial.println("state = SEND");
-                state = SEND;
-            }
-        }else{
-            Serial.println("state = ERR");
-            state = ERR;
-        }
-    }
-    Serial.println("Sync done");
-    Serial.print("other players movement: ");Serial.println(otherPlayerMov);
-    return otherPlayerMov;
-}
-
 char readInput(char oldChar){
     int horizontal = analogRead(HORIZ); //0-1024, left to right
     int vertical = analogRead(VERT);//0-1024, up to down
@@ -340,6 +132,37 @@ char readInput(char oldChar){
         }
     }
 }
+
+//Winlose is called inside collision(), or after time() returns true 
+//val decides winner: 0 is server, 1 is client, 2 is tie
+void winLose(int val){
+  tft.fillScreen(0x0000);
+  if(val == 1){//srv win
+      Serial.println("Host / Srv wins");
+      tft.setCursor(72,56);
+      tft.print("Host");
+      tft.setCursor(80,54);
+      tft.print("Wins!");
+  }else if(val == 0){//cli win
+      Serial.println("Client wins");
+      tft.setCursor(72,52);
+      tft.print("Client");
+      tft.setCursor(80,54);
+      tft.print("Wins!");
+  }else{//tie
+      Serial.println("Tie");
+      tft.setCursor(72,52);
+      tft.print("It's a");
+      tft.setCursor(80,56);
+      tft.print("Tie!");
+      
+  }
+  //Tell to press reset key
+  tft.setCursor(152,0);
+  tft.print("Press Reset");
+  Serial.println("Draw Screen, tell to reset.");
+}//Done
+
 
 bool collision(Snake* snakeCli, Snake* snakeSrv){
     //Check for walls
@@ -559,6 +382,187 @@ void snake(int* dotX, int* dotY){//up = N down = S left = W right = E
   
 }
 
+//Startup()
+//After client and server are set up, initialize screen, board, and snake.
+//Run snake() as last statement
+void startUp(){
+  tft.setTextColor(0xFFFF, 0x0000);
+  
+  //Draw boundaries
+  //debug
+  Serial.println("Drawing boundaries");
+  fillRect(0, 16, 128, 4, 0xFFFF);
+  fillRect(0, 140, 128, 4, 0xFFFF);
+  fillRect(20, 0, 4, 120, 0xFFFF);
+  fillRect(20, 108, 4, 120, 0xFFFF);
+  
+  //Draw player ID
+  //debug
+  Serial.println("Drawing player ID");
+  tft.setCursor(10,29);
+  tft.print("HOST SNAKE");
+  tft.setCursor(70,131);
+  tft.print("CLIENT SNAKE");
+  
+  //pointDot();
+  //debug
+  Serial.println("Make start dot");
+  int x,y;
+  pointDot(&x,&y);
+  
+  //3,2,1,GO
+  //debug
+  Serial.println("Draw Countdown");
+  tft.setCursor(62,0);
+  tft.print("3");
+  delay(950);
+  fillRect(62, 0, 8, 4, 0x0000);
+  tft.print("2");
+  delay(950);
+  fillRect(62, 0, 8, 4, 0x0000);
+  tft.print("1");
+  delay(950);
+  tft.setCursor(60,0);
+  fillRect(62, 0, 8, 4, 0x0000);
+  
+  //Clear player ID
+  fillRect(10, 29, 8, 40, 0x0000);
+  fillRect(70, 131, 8, 48, 0x0000);
+  
+  tft.print("GO");
+  fillRect(60, 0, 8, 8, 0x0000);
+  delay(50);
+  
+  //Start game
+  //debug
+  Serial.println("Call snake / Start game");
+  snake(&x,&y);
+}//Done
+
+//Menu for server
+//Change in text from menuCli
+void menuSrv(){
+  //debug
+  Serial.print("Draw menu for srv");
+  tft.fillScreen(0x0000);
+  tft.setTextColor(0xFFFF, 0x0000);
+  tft.setCursor(0,0);
+  tft.print("host");
+  tft.setCursor(54,76);
+  tft.print("START");
+  while(true){ //when not pressed
+    if(digitalRead(SEL) == 1){
+      //debug
+      Serial.println("Start pressed");
+      sendChar('S');
+      delay(50);
+      //debug
+      Serial.println("Call startup");
+      startUp();
+    }
+    delay(50);
+  }
+}//Done
+
+//Menu for client
+//Change in text from menuSrv
+void menuCli(){
+  tft.fillScreen(0x0000);
+  tft.setTextColor(0xFFFF, 0x0000);
+  tft.setCursor(0,0);
+  tft.print("client");
+  tft.setCursor(50,72);
+  tft.print("Waiting");
+  tft.setCursor(58,70);
+  tft.print("For Host");
+  bool start = FALSE;
+  while(start == FALSE){
+    start = listen('S');
+  }
+  Serial.println("Start heard");
+  Serial.println("Call startup");
+  startUp();
+}//Done
+
+
+// syncSrv()
+// sends and receives characters as the server arduino
+// argument: character, returns character
+char syncSrv(char mov){
+    typedef enum {SEND, WFR, STL, LIS, STD, ERR }State; //send, wait for received, send that listening, listen, wait for done. 
+    State state = SEND;
+    char otherPlayerMov;
+    
+    while((state != STD) || (state !=ERR)){
+        if(state == SEND){
+            sendChar(mov);
+            Serial.print("state = WFR");
+            state = WFR;
+        }else if(state == WFR){
+            if(listen('A')){
+                Serial.println("state = LIS");
+                state = LIS;
+            }else{
+                Serial.println("state = SEND");
+                state = SEND;
+            }
+        }else if(state == LIS){
+            otherPlayerMov = listenDir();
+            if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R'){
+                Serial.println("state = STD");
+                send('A');
+                state = STD;
+            }
+        }else{
+            Serial.println("state = ERR");
+            state = ERR;
+        }
+    }
+    Serial.println("Sync done");
+    Serial.print("other players movement: ");Serial.println(otherPlayerMov);
+    return otherPlayerMov;
+}
+
+// syncCli()
+// sends and receives characters as the client arduino
+// argument: character, returns character
+char syncCli(char mov){
+    typedef enum {LIS, WFR, SEND, D, ERR }State; //listen for their move / send that received, send our move, wait for received, tell done 
+    State state = SEND;
+    char otherPlayerMov;
+    
+    while((state != D) || (state !=ERR)){
+        if(state == LIS){
+            otherPlayerMov = listenDir();
+            if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R'){
+                Serial.println("state = SEND");
+                send('A');
+                state = SEND;
+            }
+        }else if(state == SEND){
+            sendChar(mov);
+            Serial.println("state = WFR");
+            state = WFR;
+        }else if(state == WFR){
+            if(listen('A')){
+                Serial.println("state = D");
+                state = D;
+            }else{
+                Serial.println("state = SEND");
+                state = SEND;
+            }
+        }else{
+            Serial.println("state = ERR");
+            state = ERR;
+        }
+    }
+    Serial.println("Sync done");
+    Serial.print("other players movement: ");Serial.println(otherPlayerMov);
+    return otherPlayerMov;
+}
+
+
+
 //Function to start 
 int main(){
   //stuff go here
@@ -579,10 +583,10 @@ int main(){
   
   if(digitalRead(srvCliPin) == HIGH){ // read pin / determine srv or cli
     Serial.println("pin HIGH Srv");
-    function(); // call appropriate functions
+    menuSrv(); // call appropriate functions
   }else{
     Serial.println("pin low cli");
-    function(); // call appropriate functions
+    menuCli(); // call appropriate functions
   }
   
   Serial.end();
