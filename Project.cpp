@@ -275,6 +275,39 @@ char syncCli(char mov){
     return otherPlayerMov;
 }
 
+char readInput(char oldChar){
+    int horizontal = analogRead(HORIZ); //0-1024, left to right
+    int vertical = analogRead(VERT);//0-1024, up to down
+    int delta_horizontal = abs(horizontal - init_horiz);
+    int delta_vertical = abs(vertical - init_vert);
+    //case 3: no input is entered
+    if(horizontal==init_horiz)&&(vertical==init_vert){
+        return oldChar;
+    }else
+    //case 1: horizontal is larger than vertical or equal
+    if(delta_horizontal >= delta_vertical){//Go horizontal
+        //Left
+        if(horizontal < init_horiz){
+            return 'L';
+        }
+        //Right
+        else{
+            return 'R';
+        }
+    }else
+    //case 2: vertical is larger than horizontal
+    {//(delta_vertical > delta_horizontal) Go vertical
+        //Up
+        if(vertical < init_vert){
+            return 'U';
+        }
+        //Down
+        else{
+            return 'D';
+        }
+    }
+}
+
 bool collision(Snake* snakeCli, Snake* snakeSrv){
     //Check for walls
     if((snakeCli->x[snakeCli->head]<0)
@@ -386,6 +419,8 @@ void snake(int* dotX, int* dotY){//up = N down = S left = W right = E
        }
        
        //Placeholder for synch() to be used with head;
+       
+       //readInput();
        
        //Client
        if(){//Up
