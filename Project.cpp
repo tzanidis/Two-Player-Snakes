@@ -188,19 +188,25 @@ void menuCli(){
 }//Done
 
 //Winlose is called inside collision(), or after time() returns true 
-//val decides winner: 0 is server, 1 is client
-void winLose(bool val){
+//val decides winner: 0 is server, 1 is client, 2 is tie
+void winLose(int val){
   tft.fillScreen(0x0000);
-  if(val == TRUE){//Host? cli?
+  if(val == 1){//Host? cli?
       tft.setCursor(72,56);
       tft.print("Host");
       tft.setCursor(80,54);
       tft.print("Wins!");
-  }else{
+  }else if(val == 0){
       tft.setCursor(72,56);
       tft.print("Client");
       tft.setCursor(80,54);
       tft.print("Wins!");
+  }else{//Tie
+      tft.setCursor(72,56);
+      tft.print("It's a");
+      tft.setCursor(80,54);
+      tft.print("Tie!");
+      
   }
   //Tell to press reset key
   tft.setCursor(152,0);
@@ -393,33 +399,54 @@ void snake(int* dotX, int* dotY){//up = N down = S left = W right = E
   
   int iTime = millis(); //Initial time
   
-  char oldDir;
+  char oldDir, dirOther, dir;
   bool srv;
   if(digitalRead(srvCliPin) == HIGH){ // read pin / determine srv or cli
             Serial.println("pin HIGH Srv");
             srv = TRUE;
-            oldDir = 'R';
+            oldDirSrv = 'R';
+            oldDirCli = 'L';
         }else{
             Serial.println("pin low cli");
             srv = FALSE;
-            oldDir = 'L';
+            oldDirCli = 'L';
+            oldDirSrv = 'R';
         }
   
   //Start snakes
   while(!collision(snakeCli,snakeSrv)&&!time(&iTime)){
         //Put snake code in here - That means moving snakes
         
-        //readInput(oldDir);
-        
         if(srv){ // read pin / determine srv or cli
             Serial.println("pin HIGH Srv");
-            syncSrv(readInput(oldDir);); // call appropriate functions
+            dir = readInput(oldDir);
+            dirOther = syncSrv(dir); // call appropriate functions
         }else{
             Serial.println("pin low cli");
-            syncCli(readInput(oldDir);); // call appropriate functions
+            dir = readInput(oldDir);
+            dirOther = syncCli(dir); // call appropriate functions
         }
        
-       //Check for point dot function here (prevents tie/player priority)
+       //Check for point dot function (prevents tie/player priority)
+       bool dotTouch = false;
+       //Client
+       if((snakeCli->x[snakeCli->head]==*dotX)&&(snakeCli->y[snakeCli->head]==*dotY)){
+           snakeCli->delay = 'Y';
+           snakeCli->length += 1;
+           dotTouch = true;
+       }
+       //Server
+       if((snakeSrv->x[snakeSrv->head]==*dotX)&&(snakeSrv->y[snakeSrv->head]==*dotY)){
+           snakeSrv->delay = 'Y';
+           snakeSrv->length += 1;
+           if(dotTouch){ //Prevent tie
+               winLose(2);
+           }
+           dotTouch = true;
+       }
+       if(dotTouch){//Move dot to new location
+           pointDot(dotX,dotY);
+       }
        
        //If haven't eaten dot, delete tail and undraw
        //Client's Tail
@@ -441,10 +468,6 @@ void snake(int* dotX, int* dotY){//up = N down = S left = W right = E
        }else{
             snakeSrv->delay = 'N';
        }
-       
-       //Placeholder for synch() to be used with head;
-       
-       //readInput();
        
        //Client
        if(){//Up
