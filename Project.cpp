@@ -92,7 +92,8 @@ void startUp(){
   tft.print("CLIENT SNAKE");
   
   //pointDot();
-  pointDot();
+  int x,y;
+  pointDot(&x,&y);
   
   //3,2,1,GO
   tft.setCursor(0,62);
@@ -116,7 +117,7 @@ void startUp(){
   delay(50);
   
   //Start game
-  snake();
+  snake(&x,&y);
 }//Almost
 
 int randomDotX(){
@@ -139,11 +140,11 @@ int randomDotY(){
     return y;
 }//Done
 
-void pointDot(){//get rand spot draw dot
-  int x = randomDotX();
-  int y = randomDotY();
-  fillCircle(((x*3)-1)+20.5, ((y*3)-1)+4.5, 2, 0xFFFF);
-}//Done
+void pointDot(int* x, int* y){//get rand spot draw dot
+  *x = randomDotX();
+  *y = randomDotY();
+  fillCircle(((x*3))+3, ((y*3))+19, 2, 0xFFFF);
+ }
 
 void menuSrv(){
   tft.fillScreen(0x0000);
@@ -321,7 +322,7 @@ bool time(int* iTime){
 }
 
 //Main game function, runs the entire game
-void snake(){//up = N down = S left = W right = E
+void snake(int* dotX, int* dotY){//up = N down = S left = W right = E
   
   //Create snakes - 2d array
   //call with snakeCli[i][j]
@@ -347,6 +348,59 @@ void snake(){//up = N down = S left = W right = E
   //Start snakes
   while(!collision(snakeCli,snakeSrv)&&!time(&iTime)){
        //Put snake code in here - That means moving snakes
+       
+       //Check for point dot function here (prevents tie/player priority)
+       
+       //If haven't eaten dot, delete tail and undraw
+       //Client's Tail
+       if(snakeCli->delay == 'N'){
+            //Delete tail on display
+            fillRect((snakeCli->x[snakeCli->tail]*3)+3,(snakeCli->y[snakeCli->tail]*3)+19,3,3,0); //0 = black
+            //Move tail by one
+            snakeCli->tail = (snakeCli->tail + 1)%50;
+       }else{
+            snakeCli->delay = 'N';
+       }
+       
+       //Server's Tail
+       if(snakeSrv->delay == 'N'){
+            //Delete tail on display
+            fillRect((snakeSrv->x[snakeSrv->tail]*3)+3,(snakeSrv->y[snakeSrv->tail]*3)+19,3,3,0); //0 = black
+            //Move tail by one
+            snakeSrv->tail = (snakeSrv->tail + 1)%50;
+       }else{
+            snakeSrv->delay = 'N';
+       }
+       
+       //Placeholder for synch() to be used with head;
+       
+       //Client
+       if(){//Up
+            //Transfer coordinates to new head
+            snakeCli->y[(snakeCli->head+1)%50] += snakeCli->y[snakeCli->head] + 1;
+            snakeCli->x[(snakeCli->head+1)%50] += snakeCli->x[snakeCli->head];
+       }
+       if(){//Right
+            //Transfer coordinates to new head
+            snakeCli->x[(snakeCli->head+1)%50] += snakeCli->x[snakeCli->head] + 1;
+            snakeCli->y[(snakeCli->head+1)%50] += snakeCli->y[snakeCli->head];
+       }
+       if(){//Down
+            //Transfer coordinates to new head
+            snakeCli->y[(snakeCli->head+1)%50] += snakeCli->y[snakeCli->head] - 1;
+            snakeCli->x[(snakeCli->head+1)%50] += snakeCli->x[snakeCli->head];
+       }
+       if(){//Left
+            //Transfer coordinates to new head
+            snakeCli->x[(snakeCli->head+1)%50] += snakeCli->x[snakeCli->head] - 1;
+            snakeCli->y[(snakeCli->head+1)%50] += snakeCli->y[snakeCli->head];
+       }
+       snakeCli->head = (snakeCli->head + 1)%50;
+       //Draw new client head
+       fillRect((snakeCli->x[snakeCli->head]*3)+3,(snakeCli->y[snakeCli->head]*3)+19,3,3,0xFFFF); //0 = black
+       
+       //Server
+       //To be copy pasted once client is finished
        
   }
   
