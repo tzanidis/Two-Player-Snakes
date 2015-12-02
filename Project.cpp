@@ -16,6 +16,8 @@
 const int VERT = 0;  // analog input
 const int HORIZ = 1; // analog input
 const int SEL = 9;   // digital input 
+const int init_horiz = analogRead(HORIZ);
+const int init_vert = analogRead(VERT);
 
 //Define the tft
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
@@ -358,9 +360,31 @@ void snake(int* dotX, int* dotY){//up = N down = S left = W right = E
   
   int iTime = millis(); //Initial time
   
+  char oldDir;
+  bool srv;
+  if(digitalRead(srvCliPin) == HIGH){ // read pin / determine srv or cli
+            Serial.println("pin HIGH Srv");
+            srv = TRUE;
+            oldDir = 'R';
+        }else{
+            Serial.println("pin low cli");
+            srv = FALSE;
+            oldDir = 'L';
+        }
+  
   //Start snakes
   while(!collision(snakeCli,snakeSrv)&&!time(&iTime)){
-       //Put snake code in here - That means moving snakes
+        //Put snake code in here - That means moving snakes
+        
+        //readInput(oldDir);
+        
+        if(srv){ // read pin / determine srv or cli
+            Serial.println("pin HIGH Srv");
+            syncSrv(readInput(oldDir);); // call appropriate functions
+        }else{
+            Serial.println("pin low cli");
+            syncCli(readInput(oldDir);); // call appropriate functions
+        }
        
        //Check for point dot function here (prevents tie/player priority)
        
