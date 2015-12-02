@@ -227,7 +227,7 @@ char syncSrv(char mov){
             }
         }else if(state == LIS){
             otherPlayerMov = listenDir();
-            if(otherPlayerMov == ){
+            if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R'){
                 Serial.println();
                 send('A');
                 state = STD;
@@ -251,7 +251,7 @@ char syncCli(char mov){
     while((state != D) || (state !=ERR)){
         if(state == LIS){
             otherPlayerMov = listenDir();
-            if(otherPlayerMov == ){
+            if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R'){
                 Serial.println();
                 send('A');
                 state = WFD;
