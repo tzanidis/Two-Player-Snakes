@@ -3,6 +3,8 @@
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7735.h> // Hardware-specific library
 
+
+
 //standard GLOBAL VARIABLES
 //standard U of A library settings, assuming Atmel Mega SPI pins
 #define SD_CS    5  // Chip select line for SD card
@@ -107,31 +109,39 @@ void startUp(){
   tft.setTextColor(0xFFFF, 0x0000);
   
   //Draw boundaries
+  //debug
+  Serial.println("Drawing boundaries");
   fillRect(0, 16, 128, 4, 0xFFFF);
   fillRect(0, 140, 128, 4, 0xFFFF);
   fillRect(20, 0, 4, 120, 0xFFFF);
   fillRect(20, 108, 4, 120, 0xFFFF);
   
   //Draw player ID
+  //debug
+  Serial.println("Drawing player ID");
   tft.setCursor(10,29);
   tft.print("HOST SNAKE");
   tft.setCursor(70,131);
   tft.print("CLIENT SNAKE");
   
   //pointDot();
+  //debug
+  Serial.println("Make start dot");
   int x,y;
   pointDot(&x,&y);
   
   //3,2,1,GO
+  //debug
+  Serial.println("Draw Countdown");
   tft.setCursor(62,0);
   tft.print("3");
-  delay(900);
+  delay(950);
   fillRect(62, 0, 8, 4, 0x0000);
   tft.print("2");
-  delay(900);
+  delay(950);
   fillRect(62, 0, 8, 4, 0x0000);
   tft.print("1");
-  delay(900);
+  delay(950);
   tft.setCursor(60,0);
   fillRect(62, 0, 8, 4, 0x0000);
   
@@ -144,12 +154,16 @@ void startUp(){
   delay(50);
   
   //Start game
+  //debug
+  Serial.println("Call snake / Start game");
   snake(&x,&y);
-}//Almost
+}//Done
 
 //Menu for server
 //Change in text from menuCli
 void menuSrv(){
+  //debug
+  Serial.print("Draw menu for srv");
   tft.fillScreen(0x0000);
   tft.setTextColor(0xFFFF, 0x0000);
   tft.setCursor(0,0);
@@ -158,8 +172,12 @@ void menuSrv(){
   tft.print("START");
   while(true){ //when not pressed
     if(digitalRead(SEL) == 1){
+      //debug
+      Serial.println("Start pressed");
       sendChar('S');
       delay(50);
+      //debug
+      Serial.println("Call startup");
       startUp();
     }
     delay(50);
@@ -181,6 +199,8 @@ void menuCli(){
   while(start == FALSE){
     start = listen('S');
   }
+  Serial.println("Start heard");
+  Serial.println("Call startup");
   startUp();
 }//Done
 
@@ -188,17 +208,20 @@ void menuCli(){
 //val decides winner: 0 is server, 1 is client, 2 is tie
 void winLose(int val){
   tft.fillScreen(0x0000);
-  if(val == 1){//Host? cli?
+  if(val == 1){//srv win
+      Serial.println("Host / Srv wins");
       tft.setCursor(72,56);
       tft.print("Host");
       tft.setCursor(80,54);
       tft.print("Wins!");
-  }else if(val == 0){
+  }else if(val == 0){//cli win
+      Serial.println("Client wins");
       tft.setCursor(72,52);
       tft.print("Client");
       tft.setCursor(80,54);
       tft.print("Wins!");
-  }else{//Tie
+  }else{//tie
+      Serial.println("Tie");
       tft.setCursor(72,52);
       tft.print("It's a");
       tft.setCursor(80,56);
@@ -208,6 +231,7 @@ void winLose(int val){
   //Tell to press reset key
   tft.setCursor(152,0);
   tft.print("Press Reset");
+  Serial.println("Draw Screen, tell to reset.");
 }//Done
 
 // syncSrv()
@@ -221,27 +245,30 @@ char syncSrv(char mov){
     while((state != STD) || (state !=ERR)){
         if(state == SEND){
             sendChar(mov);
-            Serial.println();
+            Serial.print("state = WFR");
             state = WFR;
         }else if(state == WFR){
             if(listen('A')){
-                Serial.println();
+                Serial.println("state = LIS");
                 state = LIS;
             }else{
+                Serial.println("state = SEND");
                 state = SEND;
             }
         }else if(state == LIS){
             otherPlayerMov = listenDir();
             if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R'){
-                Serial.println();
+                Serial.println("state = STD");
                 send('A');
                 state = STD;
             }
         }else{
-            Serial.println();
+            Serial.println("state = ERR");
             state = ERR;
         }
     }
+    Serial.println("Sync done");
+    Serial.print("other players movement: ");Serial.println(otherPlayerMov);
     return otherPlayerMov;
 }
 
@@ -249,7 +276,7 @@ char syncSrv(char mov){
 // sends and receives characters as the client arduino
 // argument: character, returns character
 char syncCli(char mov){
-    typedef enum {LIS, WFR, SEND, WFR, D, ERR }State; //listen for their move / send that received, send our move, wait for received, tell done 
+    typedef enum {LIS, WFR, SEND, D, ERR }State; //listen for their move / send that received, send our move, wait for received, tell done 
     State state = SEND;
     char otherPlayerMov;
     
@@ -257,26 +284,29 @@ char syncCli(char mov){
         if(state == LIS){
             otherPlayerMov = listenDir();
             if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R'){
-                Serial.println();
+                Serial.println("state = SEND");
                 send('A');
-                state = WFD;
+                state = SEND;
             }
         }else if(state == SEND){
             sendChar(mov);
-            Serial.println();
+            Serial.println("state = WFR");
             state = WFR;
         }else if(state == WFR){
             if(listen('A')){
-                Serial.println();
+                Serial.println("state = D");
                 state = D;
             }else{
+                Serial.println("state = SEND");
                 state = SEND;
             }
         }else{
-            Serial.println();
+            Serial.println("state = ERR");
             state = ERR;
         }
     }
+    Serial.println("Sync done");
+    Serial.print("other players movement: ");Serial.println(otherPlayerMov);
     return otherPlayerMov;
 }
 
@@ -405,7 +435,7 @@ void snake(int* dotX, int* dotY){//up = N down = S left = W right = E
             Serial.println("pin low cli");
             srv = FALSE;
         }
-        dirCli = 'L';
+		dirCli = 'L';
         dirSrv = 'R';
   
   //Start snakes
