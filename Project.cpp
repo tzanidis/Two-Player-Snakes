@@ -39,7 +39,7 @@ void sendChar(char msg){
   
   Serial3.write(msg);
   //debug
-  Serial.print("msg sent: "); Serial.println('msg');
+  Serial.print("msg sent: "); Serial.println(msg);
 }//Done
 
 bool waitOnSerial3(uint8_t nbytes, long timeout){
@@ -54,7 +54,7 @@ bool listen(char c){
   if(waitOnSerial3(1,1000)){
     char msg = Serial3.read();
     //debug
-    Serial.print("msg heard: "); Serial.println('msg');
+    Serial.print("msg heard: "); Serial.println(msg);
     if(msg == c){
       return true;
     }
@@ -67,7 +67,7 @@ char listenDir(char c){
   if(waitOnSerial3(1,1000)){
     msg = Serial3.read();
     //debug
-    Serial.print("msg heard: "); Serial.println('msg');
+    Serial.print("msg heard: "); Serial.println(msg);
   }
   return msg;
 }//Done
@@ -82,8 +82,8 @@ int randomDot(){
         r = 39; 
     }
     //debug
-    Serial.print("random num generated: "); Serial.println(x);
-    return x;
+    Serial.print("random num generated: "); Serial.println(r);
+    return r;
 }//Done
 
 //pointDot()
@@ -221,6 +221,82 @@ bool time(int* iTime){
         return true;
     }
     return false;
+}
+
+// syncSrv()
+// sends and receives characters as the server arduino
+// argument: character, returns character
+char syncSrv(char mov){
+    typedef enum {SEND, WFR, STL, LIS, STD, ERR }State; //send, wait for received, send that listening, listen, wait for done. 
+    State state = SEND;
+    char otherPlayerMov;
+    
+    while((state != STD) || (state !=ERR)){
+        if(state == SEND){
+            sendChar(mov);
+            Serial.print("state = WFR");
+            state = WFR;
+        }else if(state == WFR){
+            if(listen('A')){
+                Serial.println("state = LIS");
+                state = LIS;
+            }else{
+                Serial.println("state = SEND");
+                state = SEND;
+            }
+        }else if(state == LIS){
+            otherPlayerMov = listenDir();
+            if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R'){
+                Serial.println("state = STD");
+                send('A');
+                state = STD;
+            }
+        }else{
+            Serial.println("state = ERR");
+            state = ERR;
+        }
+    }
+    Serial.println("Sync done");
+    Serial.print("other players movement: ");Serial.println(otherPlayerMov);
+    return otherPlayerMov;
+}
+
+// syncCli()
+// sends and receives characters as the client arduino
+// argument: character, returns character
+char syncCli(char mov){
+    typedef enum {LIS, WFR, SEND, D, ERR }State; //listen for their move / send that received, send our move, wait for received, tell done 
+    State state = SEND;
+    char otherPlayerMov;
+    
+    while((state != D) || (state !=ERR)){
+        if(state == LIS){
+            otherPlayerMov = listenDir();
+            if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R'){
+                Serial.println("state = SEND");
+                send('A');
+                state = SEND;
+            }
+        }else if(state == SEND){
+            sendChar(mov);
+            Serial.println("state = WFR");
+            state = WFR;
+        }else if(state == WFR){
+            if(listen('A')){
+                Serial.println("state = D");
+                state = D;
+            }else{
+                Serial.println("state = SEND");
+                state = SEND;
+            }
+        }else{
+            Serial.println("state = ERR");
+            state = ERR;
+        }
+    }
+    Serial.println("Sync done");
+    Serial.print("other players movement: ");Serial.println(otherPlayerMov);
+    return otherPlayerMov;
 }
 
 //Main game function, runs the entire game
@@ -483,85 +559,6 @@ void menuCli(){
   Serial.println("Call startup");
   startUp();
 }//Done
-
-
-// syncSrv()
-// sends and receives characters as the server arduino
-// argument: character, returns character
-char syncSrv(char mov){
-    typedef enum {SEND, WFR, STL, LIS, STD, ERR }State; //send, wait for received, send that listening, listen, wait for done. 
-    State state = SEND;
-    char otherPlayerMov;
-    
-    while((state != STD) || (state !=ERR)){
-        if(state == SEND){
-            sendChar(mov);
-            Serial.print("state = WFR");
-            state = WFR;
-        }else if(state == WFR){
-            if(listen('A')){
-                Serial.println("state = LIS");
-                state = LIS;
-            }else{
-                Serial.println("state = SEND");
-                state = SEND;
-            }
-        }else if(state == LIS){
-            otherPlayerMov = listenDir();
-            if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R'){
-                Serial.println("state = STD");
-                send('A');
-                state = STD;
-            }
-        }else{
-            Serial.println("state = ERR");
-            state = ERR;
-        }
-    }
-    Serial.println("Sync done");
-    Serial.print("other players movement: ");Serial.println(otherPlayerMov);
-    return otherPlayerMov;
-}
-
-// syncCli()
-// sends and receives characters as the client arduino
-// argument: character, returns character
-char syncCli(char mov){
-    typedef enum {LIS, WFR, SEND, D, ERR }State; //listen for their move / send that received, send our move, wait for received, tell done 
-    State state = SEND;
-    char otherPlayerMov;
-    
-    while((state != D) || (state !=ERR)){
-        if(state == LIS){
-            otherPlayerMov = listenDir();
-            if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R'){
-                Serial.println("state = SEND");
-                send('A');
-                state = SEND;
-            }
-        }else if(state == SEND){
-            sendChar(mov);
-            Serial.println("state = WFR");
-            state = WFR;
-        }else if(state == WFR){
-            if(listen('A')){
-                Serial.println("state = D");
-                state = D;
-            }else{
-                Serial.println("state = SEND");
-                state = SEND;
-            }
-        }else{
-            Serial.println("state = ERR");
-            state = ERR;
-        }
-    }
-    Serial.println("Sync done");
-    Serial.print("other players movement: ");Serial.println(otherPlayerMov);
-    return otherPlayerMov;
-}
-
-
 
 //Function to start 
 int main(){
