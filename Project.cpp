@@ -26,12 +26,11 @@ typedef struct {//size is 50 by default
     int head = 4;
     int tail = 0;
     int length = 5;
-    char delay = 'Y'; //For eating the point dot, Y is yes, N is no
 } Snake;
 
 void sendChar(char msg){
   //Start = S
-  //Sync = N
+  //Sync = A
   //Up = U
   //Down = D
   //Left = L
@@ -42,7 +41,27 @@ void sendChar(char msg){
   //Serial.print("msg sent: "); Serial.println('msg');
 }//Done
 
+bool waitOnSerial3(uint8_t nbytes, long timeout){
+    unsigned long deadline = millis() + timeout;
+    while((Serial3.available() < nbytes) && (timeout < 0 || millis() < deadline)){
+        delay(1);
+    }
+    return Serial3.available() >= nbytes;
+}
+
 bool listen(char c){
+  if(waitOnSerial3(1,1000)){
+    char msg = Serial3.read();
+    //debug
+    //Serial.print("msg heard: "); Serial.println('msg');
+    if(msg == c){
+      return true;
+    }
+  }
+  return false;
+}//Done
+
+char listenDir(char c){
   if(waitOnSerial3(1,1000)){
     char msg = Serial3.read();
     //debug
@@ -73,8 +92,7 @@ void startUp(){
   tft.print("CLIENT SNAKE");
   
   //pointDot();
-  int x,y;
-  pointDot(&x,&y);
+  pointDot();
   
   //3,2,1,GO
   tft.setCursor(0,62);
@@ -98,7 +116,7 @@ void startUp(){
   delay(50);
   
   //Start game
-  snake(&x,&y);
+  snake();
 }//Almost
 
 int randomDotX(){
@@ -121,10 +139,10 @@ int randomDotY(){
     return y;
 }//Done
 
-void pointDot(int* x, int* y){//get rand spot draw dot
-  *x = randomDotX();
-  *y = randomDotY();
-  fillCircle(((x*3))+3, ((y*3))+19, 2, 0xFFFF);
+void pointDot(){//get rand spot draw dot
+  int x = randomDotX();
+  int y = randomDotY();
+  fillCircle(((x*3)-1)+20.5, ((y*3)-1)+4.5, 2, 0xFFFF);
 }//Done
 
 void menuSrv(){
@@ -137,6 +155,7 @@ void menuSrv(){
   while(true){ //when not pressed
     if(digitalRead(SEL) == 1){
       sendChar('S');
+      delay(50);
       startUp();
     }
     delay(50);
@@ -177,6 +196,70 @@ void winLose(bool val){
   tft.setCursor(0,152);
   tft.print("Press Reset");
 }//Done
+
+char syncSrv(char mov){
+    typedef enum {SEND, WFR, STL, LIS, STD, ERR }State; //send, wait for received, send that listening, listen, wait for done. 
+    State state = SEND;
+    char otherPlayerMov;
+    
+    while((state != STD) || (state !=ERR)){
+        if(state == SEND){
+            sendChar(mov);
+            Serial.println();
+            state = WFR;
+        }else if(state == WFR){
+            if(listen('A')){
+                Serial.println();
+                state = LIS;
+            }else{
+                state = SEND;
+            }
+        }else if(state == LIS){
+            otherPlayerMov = listenDir();
+            if(otherPlayerMov == ){
+                Serial.println();
+                send('A');
+                state = STD;
+            }
+        }else{
+            Serial.println();
+            state = ERR;
+        }
+    }
+    return otherPlayerMov;
+}
+
+char syncCli(char mov){
+    typedef enum {LIS, WFR, SEND, WFR, D, ERR }State; //listen for their move / send that received, send our move, wait for received, tell done 
+    State state = SEND;
+    char otherPlayerMov;
+    
+    while((state != D) || (state !=ERR)){
+        if(state == LIS){
+            otherPlayerMov = listenDir();
+            if(otherPlayerMov == ){
+                Serial.println();
+                send('A');
+                state = WFD;
+            }
+        }else if(state == SEND){
+            sendChar(mov);
+            Serial.println();
+            state = WFR;
+        }else if(state == WFR){
+            if(listen('A')){
+                Serial.println();
+                state = D;
+            }else{
+                state = SEND;
+            }
+        }else{
+            Serial.println();
+            state = ERR;
+        }
+    }
+    return otherPlayerMov;
+}
 
 bool collision(Snake* snakeCli, Snake* snakeSrv){
     //Check for walls
@@ -238,7 +321,7 @@ bool time(int* iTime){
 }
 
 //Main game function, runs the entire game
-void snake(int* dotX, int* dotY){//up = N down = S left = W right = E
+void snake(){//up = N down = S left = W right = E
   
   //Create snakes - 2d array
   //call with snakeCli[i][j]
@@ -264,59 +347,6 @@ void snake(int* dotX, int* dotY){//up = N down = S left = W right = E
   //Start snakes
   while(!collision(snakeCli,snakeSrv)&&!time(&iTime)){
        //Put snake code in here - That means moving snakes
-       
-       //Check for point dot function here (prevents tie/player priority)
-       
-       //If haven't eaten dot, delete tail and undraw
-       //Client's Tail
-       if(snakeCli->delay == 'N'){
-            //Delete tail on display
-            fillRect((snakeCli->x[snakeCli->tail]*3)+3,(snakeCli->y[snakeCli->tail]*3)+19,3,3,0); //0 = black
-            //Move tail by one
-            snakeCli->tail = (snakeCli->tail + 1)%50;
-       }else{
-            snakeCli->delay = 'N';
-       }
-       
-       //Server's Tail
-       if(snakeSrv->delay == 'N'){
-            //Delete tail on display
-            fillRect((snakeSrv->x[snakeSrv->tail]*3)+3,(snakeSrv->y[snakeSrv->tail]*3)+19,3,3,0); //0 = black
-            //Move tail by one
-            snakeSrv->tail = (snakeSrv->tail + 1)%50;
-       }else{
-            snakeSrv->delay = 'N';
-       }
-       
-       //Placeholder for synch() to be used with head;
-       
-       //Client
-       if(){//Up
-            //Transfer coordinates to new head
-            snakeCli->y[(snakeCli->head+1)%50] += snakeCli->y[snakeCli->head] + 1;
-            snakeCli->x[(snakeCli->head+1)%50] += snakeCli->x[snakeCli->head];
-       }
-       if(){//Right
-            //Transfer coordinates to new head
-            snakeCli->x[(snakeCli->head+1)%50] += snakeCli->x[snakeCli->head] + 1;
-            snakeCli->y[(snakeCli->head+1)%50] += snakeCli->y[snakeCli->head];
-       }
-       if(){//Down
-            //Transfer coordinates to new head
-            snakeCli->y[(snakeCli->head+1)%50] += snakeCli->y[snakeCli->head] - 1;
-            snakeCli->x[(snakeCli->head+1)%50] += snakeCli->x[snakeCli->head];
-       }
-       if(){//Left
-            //Transfer coordinates to new head
-            snakeCli->x[(snakeCli->head+1)%50] += snakeCli->x[snakeCli->head] - 1;
-            snakeCli->y[(snakeCli->head+1)%50] += snakeCli->y[snakeCli->head];
-       }
-       snakeCli->head = (snakeCli->head + 1)%50;
-       //Draw new client head
-       fillRect((snakeCli->x[snakeCli->head]*3)+3,(snakeCli->y[snakeCli->head]*3)+19,3,3,0xFFFF); //0 = black
-       
-       //Server
-       //To be copy pasted once client is finished
        
   }
   
