@@ -41,7 +41,7 @@ void sendChar(char msg){
   
   Serial3.write(msg);
   //debug
-  //Serial.print("msg sent: "); Serial.println('msg');
+  Serial.print("msg sent: "); Serial.println('msg');
 }//Done
 
 bool waitOnSerial3(uint8_t nbytes, long timeout){
@@ -50,13 +50,13 @@ bool waitOnSerial3(uint8_t nbytes, long timeout){
         delay(1);
     }
     return Serial3.available() >= nbytes;
-}
+}//Done
 
 bool listen(char c){
   if(waitOnSerial3(1,1000)){
     char msg = Serial3.read();
     //debug
-    //Serial.print("msg heard: "); Serial.println('msg');
+    Serial.print("msg heard: "); Serial.println('msg');
     if(msg == c){
       return true;
     }
@@ -65,15 +65,13 @@ bool listen(char c){
 }//Done
 
 char listenDir(char c){
+  char msg = Z;
   if(waitOnSerial3(1,1000)){
-    char msg = Serial3.read();
+    msg = Serial3.read();
     //debug
-    //Serial.print("msg heard: "); Serial.println('msg');
-    if(msg == c){
-      return true;
-    }
+    Serial.print("msg heard: "); Serial.println('msg');
   }
-  return false;
+  return msg;
 }//Done
 
 //Finds random position to place dot
@@ -85,6 +83,8 @@ int randomDot(){
     if(r > 39){
         r = 39; 
     }
+    //debug
+    Serial.print("random num generated: "); Serial.println(x);
     return x;
 }//Done
 
@@ -93,11 +93,13 @@ int randomDot(){
 //Arguments: dot x coord., dot y coord.,
 //Returns x coord and y coord
 void pointDot(int* x, int* y){
-    //get rand spot draw dot
+  //get rand spot draw dot
   *x = randomDot();
   *y = randomDot();
-    //draw dot
+  //draw dot
   fillCircle((x*3)+3, (y*3)+19, 2, 0xFFFF);
+  //debug
+  Serial.print("point generated at x: "); Serial.print(*x);Serial.print(" and y: ");Serial.println(*y);
  }
 
 //Startup()
@@ -194,14 +196,14 @@ void winLose(int val){
       tft.setCursor(80,54);
       tft.print("Wins!");
   }else if(val == 0){
-      tft.setCursor(72,56);
+      tft.setCursor(72,52);
       tft.print("Client");
       tft.setCursor(80,54);
       tft.print("Wins!");
   }else{//Tie
-      tft.setCursor(72,56);
+      tft.setCursor(72,52);
       tft.print("It's a");
-      tft.setCursor(80,54);
+      tft.setCursor(80,56);
       tft.print("Tie!");
       
   }
