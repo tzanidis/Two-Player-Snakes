@@ -74,6 +74,9 @@ char listenDir(char c){
   return false;
 }//Done
 
+//Startup()
+//After client and server are set up, initialize screen, board, and snake.
+//Run snake() as last statement
 void startUp(){
   tft.setTextColor(0xFFFF, 0x0000);
   
@@ -121,32 +124,32 @@ void startUp(){
   snake(&x,&y);
 }//Almost
 
-int randomDotX(){
-    int x = analogRead(3) * 4;
+//Finds random position to place dot
+//Used for x coord and y coord
+int randomDot(){
+    int x = analogRead(3) * 4; //0 - 36
     //Loop again, but range is only 0 to 4
     x += analogRead(3)/2;
-    if(x > 40){
-        x = 40; 
+    if(x > 39){
+        x = 39; 
     }
     return x;
 }//Done
 
-int randomDotY(){
-    int y = analogRead(3) * 4;
-    //Loop again, but range is only 0 to 4
-    y += analogRead(3)/2;
-    if(y > 40){
-        y = 40; 
-    }
-    return y;
-}//Done
-
-void pointDot(int* x, int* y){//get rand spot draw dot
-  *x = randomDotX();
-  *y = randomDotY();
+//pointDot()
+//Finds another random location to place dot, then creates a pixel there.
+//Arguments: dot x coord., dot y coord.,
+//Returns x coord and y coord
+void pointDot(int* x, int* y){
+    //get rand spot draw dot
+  *x = randomDot();
+  *y = randomDot();
+    //draw dot
   fillCircle(((x*3))+3, ((y*3))+19, 2, 0xFFFF);
  }
 
+//Menu for server
+//Change in text from menuCli
 void menuSrv(){
   tft.fillScreen(0x0000);
   tft.setTextColor(0xFFFF, 0x0000);
@@ -164,6 +167,8 @@ void menuSrv(){
   }
 }//Done
 
+//Menu for client
+//Change in text from menuSrv
 void menuCli(){
   tft.fillScreen(0x0000);
   tft.setTextColor(0xFFFF, 0x0000);
@@ -180,7 +185,8 @@ void menuCli(){
   startUp();
 }//Done
 
-//Winlose is called inside time and collision, val decides winner: 0 is server, 1 is client
+//Winlose is called inside collision(), or after time() returns true 
+//val decides winner: 0 is server, 1 is client
 void winLose(bool val){
   tft.fillScreen(0x0000);
   if(val == TRUE){//Host? cli?
@@ -199,6 +205,9 @@ void winLose(bool val){
   tft.print("Press Reset");
 }//Done
 
+// syncSrv()
+// sends and receives characters as the server arduino
+// argument: character, returns character
 char syncSrv(char mov){
     typedef enum {SEND, WFR, STL, LIS, STD, ERR }State; //send, wait for received, send that listening, listen, wait for done. 
     State state = SEND;
@@ -231,6 +240,9 @@ char syncSrv(char mov){
     return otherPlayerMov;
 }
 
+// syncCli()
+// sends and receives characters as the client arduino
+// argument: character, returns character
 char syncCli(char mov){
     typedef enum {LIS, WFR, SEND, WFR, D, ERR }State; //listen for their move / send that received, send our move, wait for received, tell done 
     State state = SEND;
