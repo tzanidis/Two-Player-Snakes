@@ -81,18 +81,18 @@ void startUp(){
   tft.setTextColor(0xFFFF, 0x0000);
   
   //Draw boundaries
-  fillRect(16, 0, 4, 128, 0xFFFF);
-  fillRect(140, 0, 4, 128, 0xFFFF);
-  fillRect(0, 20, 120, 4, 0xFFFF);
-  fillRect(108, 20, 120, 4, 0xFFFF);
+  fillRect(0, 16, 128, 4, 0xFFFF);
+  fillRect(0, 140, 128, 4, 0xFFFF);
+  fillRect(20, 0, 4, 120, 0xFFFF);
+  fillRect(20, 108, 4, 120, 0xFFFF);
   
   //Initialize snakes
   //initSnake();
   
   //Draw player ID
-  tft.setCursor(29,10);
+  tft.setCursor(10,29);
   tft.print("HOST SNAKE");
-  tft.setCursor(131,70);
+  tft.setCursor(70,131);
   tft.print("CLIENT SNAKE");
   
   //pointDot();
@@ -100,24 +100,24 @@ void startUp(){
   pointDot(&x,&y);
   
   //3,2,1,GO
-  tft.setCursor(0,62);
+  tft.setCursor(62,0);
   tft.print("3");
   delay(900);
-  fillRect(0, 62, 4, 8, 0x0000);
+  fillRect(62, 0, 8, 4, 0x0000);
   tft.print("2");
   delay(900);
-  fillRect(0, 62, 4, 8, 0x0000);
+  fillRect(62, 0, 8, 4, 0x0000);
   tft.print("1");
   delay(900);
-  tft.setCursor(0,60);
-  fillRect(0, 62, 4, 8, 0x0000);
+  tft.setCursor(60,0);
+  fillRect(62, 0, 8, 4, 0x0000);
   
   //Clear player ID
-  fillRect(29, 10, 40, 8, 0x0000);
-  fillRect(131, 70, 48, 8, 0x0000);
+  fillRect(10, 29, 8, 40, 0x0000);
+  fillRect(70, 131, 8, 48, 0x0000);
   
   tft.print("GO");
-  fillRect(0, 60, 8, 8, 0x0000);
+  fillRect(60, 0, 8, 8, 0x0000);
   delay(50);
   
   //Start game
@@ -127,11 +127,11 @@ void startUp(){
 //Finds random position to place dot
 //Used for x coord and y coord
 int randomDot(){
-    int x = analogRead(3) * 4; //0 - 36
+    int r = analogRead(3) * 4; //0 - 36
     //Loop again, but range is only 0 to 4
-    x += analogRead(3)/2;
-    if(x > 39){
-        x = 39; 
+    r += analogRead(3)/2;
+    if(r > 39){
+        r = 39; 
     }
     return x;
 }//Done
@@ -145,7 +145,7 @@ void pointDot(int* x, int* y){
   *x = randomDot();
   *y = randomDot();
     //draw dot
-  fillCircle(((x*3))+3, ((y*3))+19, 2, 0xFFFF);
+  fillCircle((x*3)+3, (y*3)+19, 2, 0xFFFF);
  }
 
 //Menu for server
@@ -190,18 +190,18 @@ void menuCli(){
 void winLose(bool val){
   tft.fillScreen(0x0000);
   if(val == TRUE){//Host? cli?
-      tft.setCursor(56,72);
+      tft.setCursor(72,56);
       tft.print("Host");
-      tft.setCursor(54,80);
+      tft.setCursor(80,54);
       tft.print("Wins!");
   }else{
-      tft.setCursor(56,72);
+      tft.setCursor(72,56);
       tft.print("Client");
-      tft.setCursor(54,80);
+      tft.setCursor(80,54);
       tft.print("Wins!");
   }
   //Tell to press reset key
-  tft.setCursor(0,152);
+  tft.setCursor(152,0);
   tft.print("Press Reset");
 }//Done
 
