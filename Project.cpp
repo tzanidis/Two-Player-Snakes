@@ -14,6 +14,7 @@
 const int VERT = 0;  // analog input
 const int HORIZ = 1; // analog input
 const int SEL = 9;   // digital input 
+const int srvCliPin = 13; //srv/cli pin
 const int init_horiz = analogRead(HORIZ);
 const int init_vert = analogRead(VERT);
 
@@ -21,11 +22,11 @@ const int init_vert = analogRead(VERT);
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 
 typedef struct {//size is 50 by default
-    int* x[50];
-    int* y[50];
+    int x[50];
+    int y[50];
     int head;//4
     int tail;//0
-    int length//5;
+    int length;//5
     char delay; // 'Y' For eating the point dot, Y is yes, N is no
 } Snake;
 
@@ -62,8 +63,8 @@ bool listen(char c){
   return false;
 }//Done
 
-char listenDir(char c){
-  char msg = Z;
+char listenDir(){
+  char msg = 'Z';
   if(waitOnSerial3(1,1000)){
     msg = Serial3.read();
     //debug
@@ -95,7 +96,7 @@ void pointDot(int* x, int* y){
   *x = randomDot();
   *y = randomDot();
   //draw dot
-  fillCircle((x*3)+3, (y*3)+19, 2, 0xFFFF);
+  tft.fillCircle((*x*3)+3, (*y*3)+19, 2, 0xFFFF);
   //debug
   Serial.print("point generated at x: "); Serial.print(*x);Serial.print(" and y: ");Serial.println(*y);
  }
@@ -248,7 +249,7 @@ char syncSrv(char mov){
             otherPlayerMov = listenDir();
             if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R'){
                 Serial.println("state = STD");
-                send('A');
+                sendChar('A');
                 state = STD;
             }
         }else{
@@ -274,7 +275,7 @@ char syncCli(char mov){
             otherPlayerMov = listenDir();
             if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R'){
                 Serial.println("state = SEND");
-                send('A');
+                sendChar('A');
                 state = SEND;
             }
         }else if(state == SEND){
@@ -300,7 +301,7 @@ char syncCli(char mov){
 }
 
 //Main game function, runs the entire game
-void snake(int* dotX, int* dotY){//up = N down = S left = W right = E
+void snake(int* dotX, int* dotY){
   
   //Create snakes - 2d array
   //call with snakeCli[i][j]
@@ -314,23 +315,16 @@ void snake(int* dotX, int* dotY){//up = N down = S left = W right = E
   snakeCli->x = {37,36,35,34,33};
   snakeCli->y = {37,37,37,37,37};
   
-  //Spawn random dot, give coordinates
-  int dotX;
-  int dotY;
-  
-  randomDot(&dotX, &dotY);
-  //3 2 1 GO! Enter startup function
-  
   int iTime = millis(); //Initial time
   
   char oldDir, dirSrv, dirCli;
   bool srv;
   if(digitalRead(srvCliPin) == HIGH){ // read pin / determine srv or cli
             Serial.println("pin HIGH Srv");
-            srv = TRUE;
+            srv = true;
         }else{
             Serial.println("pin low cli");
-            srv = FALSE;
+            srv = false;
         }
 		dirCli = 'L';
         dirSrv = 'R';
@@ -367,14 +361,14 @@ void snake(int* dotX, int* dotY){//up = N down = S left = W right = E
            dotTouch = true;
        }
        if(dotTouch){//Move dot to new location
-           pointDot(dotX,dotY);
+           pointDot(*dotX,*dotY);
        }
        
        //If haven't eaten dot, delete tail and undraw
        //Client's Tail
        if(snakeCli->delay == 'N'){
             //Delete tail on display
-            fillRect((snakeCli->x[snakeCli->tail]*3)+3,(snakeCli->y[snakeCli->tail]*3)+19,3,3,0); //0 = black
+            tft.fillRect((snakeCli->x[snakeCli->tail]*3)+3,(snakeCli->y[snakeCli->tail]*3)+19,3,3,0); //0 = black
             //Move tail by one
             snakeCli->tail = (snakeCli->tail + 1)%50;
        }else{
@@ -384,7 +378,7 @@ void snake(int* dotX, int* dotY){//up = N down = S left = W right = E
        //Server's Tail
        if(snakeSrv->delay == 'N'){
             //Delete tail on display
-            fillRect((snakeSrv->x[snakeSrv->tail]*3)+3,(snakeSrv->y[snakeSrv->tail]*3)+19,3,3,0); //0 = black
+            tft.fillRect((snakeSrv->x[snakeSrv->tail]*3)+3,(snakeSrv->y[snakeSrv->tail]*3)+19,3,3,0); //0 = black
             //Move tail by one
             snakeSrv->tail = (snakeSrv->tail + 1)%50;
        }else{
@@ -414,7 +408,7 @@ void snake(int* dotX, int* dotY){//up = N down = S left = W right = E
        }
        snakeCli->head = (snakeCli->head + 1)%50;
        //Draw new client head
-       fillRect((snakeCli->x[snakeCli->head]*3)+3,(snakeCli->y[snakeCli->head]*3)+19,3,3,0xFFFF); //0 = black
+       tft.fillRect((snakeCli->x[snakeCli->head]*3)+3,(snakeCli->y[snakeCli->head]*3)+19,3,3,0xFFFF); //0 = black
        
        //Server
        if(dirSrv == 'U'){//Up
@@ -439,14 +433,14 @@ void snake(int* dotX, int* dotY){//up = N down = S left = W right = E
        }
        snakeSrv->head = (snakeSrv->head + 1)%50;
        //Draw new server head
-       fillRect((snakeSrv->x[snakeSrv->head]*3)+3,(snakeSrv->y[snakeSrv->head]*3)+19,3,3,0xFFFF); //0 = black
+       tft.fillRect((snakeSrv->x[snakeSrv->head]*3)+3,(snakeSrv->y[snakeSrv->head]*3)+19,3,3,0xFFFF); //0 = black
        
   }
   //timeout is reached
   if(time(iTime)){
   	if(snakeCli->length > snakeSrv->length){
   		//Client's snake is longer, therefore client wins
-  		WinLose(1);
+  		winLose(1);
   	}else if(snakeSrv->length > snakeCli->length){
   		//Server's snake is longer, therefore server wins
   		winLose(0);
@@ -467,10 +461,10 @@ void startUp(){
   //Draw boundaries
   //debug
   Serial.println("Drawing boundaries");
-  fillRect(0, 16, 128, 4, 0xFFFF);
-  fillRect(0, 140, 128, 4, 0xFFFF);
-  fillRect(20, 0, 4, 120, 0xFFFF);
-  fillRect(20, 108, 4, 120, 0xFFFF);
+  tft.fillRect(0, 16, 128, 4, 0xFFFF);
+  tft.fillRect(0, 140, 128, 4, 0xFFFF);
+  tft.fillRect(20, 0, 4, 120, 0xFFFF);
+  tft.fillRect(20, 108, 4, 120, 0xFFFF);
   
   //Draw player ID
   //debug
@@ -492,21 +486,21 @@ void startUp(){
   tft.setCursor(62,0);
   tft.print("3");
   delay(950);
-  fillRect(62, 0, 8, 4, 0x0000);
+  tft.fillRect(62, 0, 8, 4, 0x0000);
   tft.print("2");
   delay(950);
-  fillRect(62, 0, 8, 4, 0x0000);
+  tft.fillRect(62, 0, 8, 4, 0x0000);
   tft.print("1");
   delay(950);
   tft.setCursor(60,0);
-  fillRect(62, 0, 8, 4, 0x0000);
+  tft.fillRect(62, 0, 8, 4, 0x0000);
   
   //Clear player ID
-  fillRect(10, 29, 8, 40, 0x0000);
-  fillRect(70, 131, 8, 48, 0x0000);
+  tft.fillRect(10, 29, 8, 40, 0x0000);
+  tft.fillRect(70, 131, 8, 48, 0x0000);
   
   tft.print("GO");
-  fillRect(60, 0, 8, 8, 0x0000);
+  tft.fillRect(60, 0, 8, 8, 0x0000);
   delay(50);
   
   //Start game
@@ -551,8 +545,8 @@ void menuCli(){
   tft.print("Waiting");
   tft.setCursor(58,70);
   tft.print("For Host");
-  bool start = FALSE;
-  while(start == FALSE){
+  bool start = false;
+  while(!start){
     start = listen('S');
   }
   Serial.println("Start heard");
@@ -574,7 +568,6 @@ int main(){
   
   //srv/cli part, needs to be in the main
   //setup pin
-  int srvCliPin = 13;
   pinMode(srvCliPin, INPUT);
   digitalWrite(srvCliPin, LOW);
   
