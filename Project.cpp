@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7735.h> // Hardware-specific library
+#include <assert.h>
 
 //standard GLOBAL VARIABLES
 //standard U of A library settings, assuming Atmel Mega SPI pins
@@ -215,7 +216,7 @@ bool collision(Snake* snakeCli, Snake* snakeSrv){
 
 //Bool time FeelsBadMan
 //Returns true if time is up, otherwise return false
-bool time(int* iTime){
+bool time(int iTime){
     int tempTime = millis();
     if((tempTime-iTime)>90000){ //Constant timeout of 1 minute and 30 seconds
         //TODO: Point system
@@ -305,15 +306,35 @@ void snake(int* dotX, int* dotY){
   
   //Create snakes - 2d array
   //call with snakeCli[i][j]
-  Snake* snakeCli = malloc(sizeof(Snake));
-  Snake* snakeSrv = malloc(sizeof(Snake));
+  Snake* snakeCli = (Snake*) malloc(sizeof(Snake));
+  Snake* snakeSrv = (Snake*) malloc(sizeof(Snake));
   assert(snakeCli != NULL);
   assert(snakeSrv != NULL);
   //Position snakes
-  snakeSrv->x = {2,3,4,5,6};
-  snakeSrv->y = {2,2,2,2,2};
-  snakeCli->x = {37,36,35,34,33};
-  snakeCli->y = {37,37,37,37,37};
+  snakeSrv->x[0] = 2;
+  snakeSrv->x[1] = 3;
+  snakeSrv->x[2] = 4;
+  snakeSrv->x[3] = 5;
+  snakeSrv->x[4] = 6;
+  
+  snakeSrv->y[0] = 2;
+  snakeSrv->y[1] = 2;
+  snakeSrv->y[2] = 2;
+  snakeSrv->y[3] = 2;
+  snakeSrv->y[4] = 2;
+  
+  snakeCli->x[0] = 37;
+  snakeCli->x[1] = 36;
+  snakeCli->x[2] = 35;
+  snakeCli->x[3] = 34;
+  snakeCli->x[4] = 33;
+  
+  snakeCli->y[0] = 37;
+  snakeCli->y[1] = 37;
+  snakeCli->y[2] = 37;
+  snakeCli->y[3] = 37;
+  snakeCli->y[4] = 37;
+  
   
   int iTime = millis(); //Initial time
   
@@ -330,7 +351,7 @@ void snake(int* dotX, int* dotY){
         dirSrv = 'R';
   
   //Start snakes
-  while(!collision(snakeCli,snakeSrv)&&!time(&iTime)){
+  while(!collision(snakeCli,snakeSrv)&&!time(iTime)){
         //Put snake code in here - That means moving snakes
         
         if(srv){ // read pin / determine srv or cli
@@ -361,7 +382,7 @@ void snake(int* dotX, int* dotY){
            dotTouch = true;
        }
        if(dotTouch){//Move dot to new location
-           pointDot(*dotX,*dotY);
+           pointDot(dotX,dotY);
        }
        
        //If haven't eaten dot, delete tail and undraw
