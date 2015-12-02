@@ -26,6 +26,7 @@ typedef struct {//size is 50 by default
     int head = 4;
     int tail = 0;
     int length = 5;
+    char delay = 'Y'; //For eating the point dot, Y is yes, N is no
 } Snake;
 
 void sendChar(char msg){
