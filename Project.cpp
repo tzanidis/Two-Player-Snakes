@@ -316,7 +316,7 @@ char readInput(char oldChar){
     int delta_horizontal = abs(horizontal - init_horiz);
     int delta_vertical = abs(vertical - init_vert);
     //case 3: no input is entered
-    if(horizontal==init_horiz)&&(vertical==init_vert){
+    if((horizontal==init_horiz)&&(vertical==init_vert)){
         return oldChar;
     }else
     //case 1: horizontal is larger than vertical or equal
@@ -426,19 +426,17 @@ void snake(int* dotX, int* dotY){//up = N down = S left = W right = E
   
   int iTime = millis(); //Initial time
   
-  char oldDir, dirOther, dir;
+  char oldDir, dirSrv, dirCli;
   bool srv;
   if(digitalRead(srvCliPin) == HIGH){ // read pin / determine srv or cli
             Serial.println("pin HIGH Srv");
             srv = TRUE;
-            oldDirSrv = 'R';
-            oldDirCli = 'L';
         }else{
             Serial.println("pin low cli");
             srv = FALSE;
-            oldDirCli = 'L';
-            oldDirSrv = 'R';
         }
+		dirCli = 'L';
+        dirSrv = 'R';
   
   //Start snakes
   while(!collision(snakeCli,snakeSrv)&&!time(&iTime)){
@@ -446,12 +444,12 @@ void snake(int* dotX, int* dotY){//up = N down = S left = W right = E
         
         if(srv){ // read pin / determine srv or cli
             Serial.println("pin HIGH Srv");
-            dir = readInput(oldDir);
-            dirOther = syncSrv(dir); // call appropriate functions
+            dirSrv = readInput(oldDir);
+            dirCli = syncSrv(dirSrv); // call appropriate functions
         }else{
             Serial.println("pin low cli");
-            dir = readInput(oldDir);
-            dirOther = syncCli(dir); // call appropriate functions
+            dirCli = readInput(oldDir);
+            dirSrv = syncCli(dirCli); // call appropriate functions
         }
        
        //Check for point dot function (prevents tie/player priority)
@@ -497,22 +495,22 @@ void snake(int* dotX, int* dotY){//up = N down = S left = W right = E
        }
        
        //Client
-       if(){//Up
+       if(dirCli == 'U'){//Up
             //Transfer coordinates to new head
             snakeCli->y[(snakeCli->head+1)%50] += snakeCli->y[snakeCli->head] + 1;
             snakeCli->x[(snakeCli->head+1)%50] += snakeCli->x[snakeCli->head];
        }
-       if(){//Right
+       if(dirCli == 'R'){//Right
             //Transfer coordinates to new head
             snakeCli->x[(snakeCli->head+1)%50] += snakeCli->x[snakeCli->head] + 1;
             snakeCli->y[(snakeCli->head+1)%50] += snakeCli->y[snakeCli->head];
        }
-       if(){//Down
+       if(dirCli == 'D'){//Down
             //Transfer coordinates to new head
             snakeCli->y[(snakeCli->head+1)%50] += snakeCli->y[snakeCli->head] - 1;
             snakeCli->x[(snakeCli->head+1)%50] += snakeCli->x[snakeCli->head];
        }
-       if(){//Left
+       if(dirCli == 'L'){//Left
             //Transfer coordinates to new head
             snakeCli->x[(snakeCli->head+1)%50] += snakeCli->x[snakeCli->head] - 1;
             snakeCli->y[(snakeCli->head+1)%50] += snakeCli->y[snakeCli->head];
@@ -522,7 +520,29 @@ void snake(int* dotX, int* dotY){//up = N down = S left = W right = E
        fillRect((snakeCli->x[snakeCli->head]*3)+3,(snakeCli->y[snakeCli->head]*3)+19,3,3,0xFFFF); //0 = black
        
        //Server
-       //To be copy pasted once client is finished
+       if(dirSrv == 'U'){//Up
+            //Transfer coordinates to new head
+            snakeSrv->y[(snakeSrv->head+1)%50] += snakeSrv->y[snakeSrv->head] + 1;
+            snakeSrv->x[(snakeSrv->head+1)%50] += snakeSrv->x[snakeSrv->head];
+       }
+       if(dirSrv == 'R'){//Right
+            //Transfer coordinates to new head
+            snakeSrv->x[(snakeSrv->head+1)%50] += snakeSrv->x[snakeSrv->head] + 1;
+            snakeSrv->y[(snakeSrv->head+1)%50] += snakeSrv->y[snakeSrv->head];
+       }
+       if(dirSrv == 'D'){//Down
+            //Transfer coordinates to new head
+            snakeSrv->y[(snakeSrv->head+1)%50] += snakeSrv->y[snakeSrv->head] - 1;
+            snakeSrv->x[(snakeSrv->head+1)%50] += snakeSrv->x[snakeSrv->head];
+       }
+       if(dirSrv == 'L'){//Left
+            //Transfer coordinates to new head
+            snakeSrv->x[(snakeSrv->head+1)%50] += snakeSrv->x[snakeSrv->head] - 1;
+            snakeSrv->y[(snakeSrv->head+1)%50] += snakeSrv->y[snakeSrv->head];
+       }
+       snakeSrv->head = (snakeSrv->head + 1)%50;
+       //Draw new server head
+       fillRect((snakeSrv->x[snakeSrv->head]*3)+3,(snakeSrv->y[snakeSrv->head]*3)+19,3,3,0xFFFF); //0 = black
        
   }
   
