@@ -76,6 +76,30 @@ char listenDir(char c){
   return false;
 }//Done
 
+//Finds random position to place dot
+//Used for x coord and y coord
+int randomDot(){
+    int r = analogRead(3) * 4; //0 - 36
+    //Loop again, but range is only 0 to 4
+    r += analogRead(3)/2;
+    if(r > 39){
+        r = 39; 
+    }
+    return x;
+}//Done
+
+//pointDot()
+//Finds another random location to place dot, then creates a pixel there.
+//Arguments: dot x coord., dot y coord.,
+//Returns x coord and y coord
+void pointDot(int* x, int* y){
+    //get rand spot draw dot
+  *x = randomDot();
+  *y = randomDot();
+    //draw dot
+  fillCircle((x*3)+3, (y*3)+19, 2, 0xFFFF);
+ }
+
 //Startup()
 //After client and server are set up, initialize screen, board, and snake.
 //Run snake() as last statement
@@ -87,9 +111,6 @@ void startUp(){
   fillRect(0, 140, 128, 4, 0xFFFF);
   fillRect(20, 0, 4, 120, 0xFFFF);
   fillRect(20, 108, 4, 120, 0xFFFF);
-  
-  //Initialize snakes
-  //initSnake();
   
   //Draw player ID
   tft.setCursor(10,29);
@@ -125,30 +146,6 @@ void startUp(){
   //Start game
   snake(&x,&y);
 }//Almost
-
-//Finds random position to place dot
-//Used for x coord and y coord
-int randomDot(){
-    int r = analogRead(3) * 4; //0 - 36
-    //Loop again, but range is only 0 to 4
-    r += analogRead(3)/2;
-    if(r > 39){
-        r = 39; 
-    }
-    return x;
-}//Done
-
-//pointDot()
-//Finds another random location to place dot, then creates a pixel there.
-//Arguments: dot x coord., dot y coord.,
-//Returns x coord and y coord
-void pointDot(int* x, int* y){
-    //get rand spot draw dot
-  *x = randomDot();
-  *y = randomDot();
-    //draw dot
-  fillCircle((x*3)+3, (y*3)+19, 2, 0xFFFF);
- }
 
 //Menu for server
 //Change in text from menuCli
