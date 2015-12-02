@@ -3,8 +3,6 @@
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7735.h> // Hardware-specific library
 
-
-
 //standard GLOBAL VARIABLES
 //standard U of A library settings, assuming Atmel Mega SPI pins
 #define SD_CS    5  // Chip select line for SD card
@@ -544,6 +542,19 @@ void snake(int* dotX, int* dotY){//up = N down = S left = W right = E
        //Draw new server head
        fillRect((snakeSrv->x[snakeSrv->head]*3)+3,(snakeSrv->y[snakeSrv->head]*3)+19,3,3,0xFFFF); //0 = black
        
+  }
+  //timeout is reached
+  if(time(iTime)){
+  	if(snakeCli->length > snakeSrv->length){
+  		//Client's snake is longer, therefore client wins
+  		WinLose(1);
+  	}else if(snakeSrv->length > snakeCli->length){
+  		//Server's snake is longer, therefore server wins
+  		winLose(0);
+  	}else{
+  		//Snake lengths are equal. Tie.
+  		winLose(2);
+  	}
   }
   
 }
