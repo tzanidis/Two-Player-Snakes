@@ -77,12 +77,7 @@ char listenDir(){
 //Finds random position to place dot
 //Used for x coord and y coord
 int randomDot(){
-    int r = analogRead(3) * 4; //0 - 36
-    //Loop again, but range is only 0 to 4
-    r += analogRead(3)/2;
-    if(r > 39){
-        r = 39; 
-    }
+    int r = random(40); //0 - 39
     //debug
     Serial.print("random num generated: "); Serial.println(r);
     return r;
@@ -146,20 +141,20 @@ void winLose(int val){
   if(val == 1){//srv win
       Serial.println("Host / Srv wins");
       tft.setCursor(72,56);
-      tft.print("Host");
+      //~ tft.println("Host");
       tft.setCursor(80,54);
       tft.print("Wins!");
   }else if(val == 0){//cli win
       Serial.println("Client wins");
       tft.setCursor(72,52);
-      tft.print("Client");
-      tft.setCursor(80,54);
+      tft.println("Client");
+      //~ tft.setCursor(80,54);
       tft.print("Wins!");
   }else{//tie
       Serial.println("Tie");
       tft.setCursor(72,52);
-      tft.print("It's a");
-      tft.setCursor(80,56);
+      tft.println("It's a");
+      //~ tft.setCursor(80,56);
       tft.print("Tie!");
       
   }
@@ -182,8 +177,8 @@ bool collision(Snake* snakeCli, Snake* snakeSrv){
     ||(snakeCli->y[snakeCli->head]<0)
     ||(snakeCli->y[snakeCli->head]>39)){
         //Snake client hit a wall
-        Serial.print("Snakes client has hit a wall at x: "); Serial.print(snakeCli->x[snakeCli->head]); Serial.print(", y: "); Serial.println(snakeCli->y[snakeCli->head]);
-        winLose(0);
+        Serial.print("Srv Win / Snake client has hit a wall at x: "); Serial.print(snakeCli->x[snakeCli->head]); Serial.print(", y: "); Serial.println(snakeCli->y[snakeCli->head]);
+        winLose(1);
         return true;
     }
     if((snakeSrv->x[snakeSrv->head]<0)
@@ -191,8 +186,8 @@ bool collision(Snake* snakeCli, Snake* snakeSrv){
     ||(snakeSrv->y[snakeSrv->head]<0)
     ||(snakeSrv->y[snakeSrv->head]>39)){
         //Snake server hit a wall
-        Serial.print("Snakes server has hit a wall at x: "); Serial.print(snakeSrv->x[snakeSrv->head]); Serial.print(", y: "); Serial.println(snakeSrv->y[snakeSrv->head]);
-        winLose(1);
+        Serial.print("Cli Win / Snake server has hit a wall at x: "); Serial.print(snakeSrv->x[snakeSrv->head]); Serial.print(", y: "); Serial.println(snakeSrv->y[snakeSrv->head]);
+        winLose(0);
         return true;
     }
     
@@ -200,7 +195,7 @@ bool collision(Snake* snakeCli, Snake* snakeSrv){
     
     //Snake heads collide
     if((snakeCli->x[snakeCli->head]==snakeSrv->x[snakeSrv->head])&&(snakeCli->y[snakeCli->head]==snakeSrv->y[snakeSrv->head])){
-        Serial.println("Snakes heads collided");
+        Serial.println("Tie / Snakes heads collided");
         winLose(2);
         return true;
     }
@@ -212,8 +207,8 @@ bool collision(Snake* snakeCli, Snake* snakeSrv){
         if(snakeCli->x[snakeCli->head]==snakeSrv->x[tempTail] //Checks x
         &&snakeCli->y[snakeCli->head]==snakeSrv->y[tempTail]){ //Checks y
         //If both are true, then snake collision is true
-            Serial.print("Snakes client has hit other snake at x: "); Serial.print(snakeCli->x[snakeCli->head]); Serial.print(", y: "); Serial.println(snakeCli->y[snakeCli->head]);
-            winLose(0);
+            Serial.print("Srv Win / Snake client has hit other snake at x: "); Serial.print(snakeCli->x[snakeCli->head]); Serial.print(", y: "); Serial.println(snakeCli->y[snakeCli->head]);
+            winLose(1);
             return true;
         }
         tempTail = (tempTail + 1)%50;
@@ -226,8 +221,8 @@ bool collision(Snake* snakeCli, Snake* snakeSrv){
         if((snakeSrv->x[snakeSrv->head]==snakeCli->x[tempTail]) //Checks x
         &&(snakeSrv->y[snakeSrv->head]==snakeCli->y[tempTail])){ //Checks y
         //If both are true, then snake collision is true
-            Serial.print("Snakes server has hit other snake at x: "); Serial.print(snakeSrv->x[snakeSrv->head]); Serial.print(", y: "); Serial.println(snakeSrv->y[snakeSrv->head]);
-            winLose(1);
+            Serial.print("Cli Win / Snake server has hit other snake at x: "); Serial.print(snakeSrv->x[snakeSrv->head]); Serial.print(", y: "); Serial.println(snakeSrv->y[snakeSrv->head]);
+            winLose(0);
             return true;
         }
         tempTail = (tempTail + 1)%50;
@@ -416,7 +411,7 @@ void snake(int* dotX, int* dotY){
            snakeSrv->delay = 'Y';
            snakeSrv->length += 1;
            if(dotTouch){ //Prevent tie
-               Serial.println("Snake tie from dot");
+               Serial.println("Tie / Snake tie from dot");
                winLose(2);
            }
            dotTouch = true;
@@ -504,15 +499,15 @@ void snake(int* dotX, int* dotY){
 	  //Timeout indicated
 		if(snakeCli->length > snakeSrv->length){
             //Client's snake is longer, therefore client wins
-            Serial.println("Client snake is longer");
-            winLose(1);
+            Serial.println("Cli Win / Client snake is longer");
+            winLose(0);
         }else if(snakeSrv->length > snakeCli->length){
             //Server's snake is longer, therefore server wins
-            Serial.println("Server snake is longer");
-            winLose(0);
+            Serial.println("Srv Win / Server snake is longer");
+            winLose(1);
         }else{
             //Snake lengths are equal. Tie.
-            Serial.println("Snakes are of equal length");
+            Serial.println("Tie / Snakes are of equal length");
             winLose(2);
         }
 	}
@@ -534,44 +529,43 @@ void startUp(){
   Serial.println("Drawing boundaries");
   tft.fillRect(0, 16, 128, 4, 0xFFFF);
   tft.fillRect(0, 140, 128, 4, 0xFFFF);
-  tft.fillRect(0, 16, 4, 120, 0xFFFF);
-  tft.fillRect(116, 16, 4, 120, 0xFFFF);
+  tft.fillRect(0, 16, 4, 124, 0xFFFF);
+  tft.fillRect(124, 16, 4, 124, 0xFFFF);
   
   //Draw player ID
   //debug
   Serial.println("Drawing player ID");
   tft.setCursor(10,29);
   tft.print("HOST SNAKE");
-  tft.setCursor(70,131);
+  tft.setCursor(46,128);
   tft.print("CLIENT SNAKE");
+  
+  //3,2,1,GO
+  //debug
+  Serial.println("Draw Countdown");
+  tft.setCursor(62,80);
+  tft.print("3");
+  delay(1000);
+  tft.setCursor(62,80);
+  tft.print("2");
+  delay(1000);
+  tft.setCursor(62,80);
+  tft.print("1");
+  delay(1000);  
+  
+  //Clear player ID
+  tft.fillRect(10, 29, 60, 8, 0x0000);
+  tft.fillRect(46, 128, 72, 8, 0x0000);
+  
+  tft.setCursor(58,80);
+  tft.print("GO");
+  delay(1000);
+  tft.fillRect(58, 80, 12, 8, 0x0000);
   
   //debug
   Serial.println("Make start dot");
   int x,y;
   pointDot(&x,&y);
-  
-  //3,2,1,GO
-  //debug
-  Serial.println("Draw Countdown");
-  tft.setCursor(62,0);
-  tft.print("3");
-  delay(950);
-  tft.fillRect(62, 0, 8, 4, 0x0000);
-  tft.print("2");
-  delay(950);
-  tft.fillRect(62, 0, 8, 4, 0x0000);
-  tft.print("1");
-  delay(950);
-  tft.setCursor(60,0);
-  tft.fillRect(62, 0, 8, 4, 0x0000);
-  
-  //Clear player ID
-  tft.fillRect(10, 29, 8, 40, 0x0000);
-  tft.fillRect(70, 131, 8, 48, 0x0000);
-  
-  tft.print("GO");
-  tft.fillRect(60, 0, 8, 8, 0x0000);
-  delay(50);
   
   //Start game
   //debug
@@ -612,8 +606,8 @@ void menuCli(){
   tft.setCursor(0,0);
   tft.print("client");
   tft.setCursor(50,72);
-  tft.print("Waiting");
-  tft.setCursor(50,80);
+  tft.println("Waiting");
+  //~ tft.setCursor(50,80);
   tft.print("For Host");
   //~ bool start = false;
   //~ while(!start){
@@ -636,7 +630,7 @@ int main(){
   Serial.begin(9600);
   Serial3.begin(9600);
   
-  randomSeed(analogRead(4));
+  randomSeed(analogRead(3));
   
   //srv/cli part, needs to be in the main
   //setup pin
