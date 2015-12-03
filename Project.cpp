@@ -5,6 +5,13 @@
 #include <assert.h>
 
 //standard GLOBAL VARIABLES
+//Create snakes - 2d array
+//call with snakeCli[i][j]
+Snake* snakeCli = (Snake*) malloc(sizeof(Snake));
+Snake* snakeSrv = (Snake*) malloc(sizeof(Snake));
+assert(snakeCli != NULL);
+assert(snakeSrv != NULL);
+
 //standard U of A library settings, assuming Atmel Mega SPI pins
 #define SD_CS    5  // Chip select line for SD card
 #define TFT_CS   6  // Chip select line for TFT display
@@ -38,6 +45,10 @@ void sendChar(char msg){
   //Down = D
   //Left = L
   //Right = R
+  //Up + len = V
+  //Down + len = B  
+  //Left + len = N
+  //Right + len = M
   
   Serial3.write(msg);
   //debug
@@ -98,10 +109,6 @@ void pointDot(int* x, int* y){
  }
 
 char readInput(char oldChar){
-	//TODO: Can't move backwards, otherwise crash into itself
-	
-	
-	//IMPORTANT!!
     int horizontal = analogRead(HORIZ); //0-1024, left to right
     int vertical = analogRead(VERT);//0-1024, up to down
     int delta_horizontal = abs(horizontal - init_horiz);
@@ -114,10 +121,16 @@ char readInput(char oldChar){
     if(delta_horizontal >= delta_vertical){//Go horizontal
         //Left
         if(horizontal < init_horiz){
+            if(oldChar == 'R'){
+              return 'R';
+            }
             return 'L';
         }
         //Right
         else{
+            if(oldChar == 'L'){
+              return 'L';
+            }
             return 'R';
         }
     }else
@@ -125,10 +138,16 @@ char readInput(char oldChar){
     {//(delta_vertical > delta_horizontal) Go vertical
         //Up
         if(vertical < init_vert){
+            if(oldChar == 'D'){
+              return 'D';
+            }
             return 'U';
         }
         //Down
         else{
+          if(oldChar == 'U'){
+              return 'U';
+            }
             return 'D';
         }
     }
@@ -272,6 +291,12 @@ char syncSrv(char mov){
                 Serial.println("state = STD");
                 sendChar('A');
                 state = STD;
+            }else if(otherPlayerMov == 'V' || otherPlayerMov == 'B' ||otherPlayerMov == 'N' ||otherPlayerMov == 'M'){
+                Serial.println("state = STD + len");
+                sendChar('A');
+                snakeCli->length +=1;
+                snakeCli->delay = 'Y';
+                state = STD;
             }
         }else{
             Serial.println("state = ERR");
@@ -299,6 +324,12 @@ char syncCli(char mov){
                 Serial.println("state = SEND");
                 sendChar('A');
                 state = SEND;
+            }else if(otherPlayerMov == 'V' || otherPlayerMov == 'B' ||otherPlayerMov == 'N' ||otherPlayerMov == 'M'){
+                Serial.println("state = STD + len");
+                sendChar('A');
+                snakeSrv->length +=1;
+                snakeSrv->delay = 'Y';
+                state = STD;
             }
         }else if(state == SEND){
             sendChar(mov);
@@ -326,23 +357,16 @@ char syncCli(char mov){
 //Main game function, runs the entire game
 void snake(int* dotX, int* dotY){
   
-  //Create snakes - 2d array
-  //call with snakeCli[i][j]
-  Snake* snakeCli = (Snake*) malloc(sizeof(Snake));
-  Snake* snakeSrv = (Snake*) malloc(sizeof(Snake));
-  assert(snakeCli != NULL);
-  assert(snakeSrv != NULL);
-  
   //Initialize snakes
   snakeSrv->head = 4;
   snakeSrv->tail = 0;
   snakeSrv->length = 5;
-  snakeSrv->delay = 'Y';
+  snakeSrv->delay = 'N';
   
   snakeCli->head = 4;
   snakeCli->tail = 0;
   snakeCli->length = 5;
-  snakeCli->delay = 'Y';
+  snakeCli->delay = 'N';
   
   //Position snakes
   snakeSrv->x[0] = 2;
@@ -397,28 +421,29 @@ void snake(int* dotX, int* dotY){
             dirCli = syncCli(dirCli); // call appropriate functions
         }
        
-       //Check for point dot function (prevents tie/player priority)
-       //In theory, dot touch is not needed since collision already checks for tie
-       bool dotTouch = false;
-       //Client
-       if((snakeCli->x[snakeCli->head]==*dotX)&&(snakeCli->y[snakeCli->head]==*dotY)){
+      //Check for point dot function (prevents tie/player priority)
+      //In theory, dot touch is not needed since collision already checks for tie
+      bool dotTouch = false;
+      
+      if(srv){
+        //Server
+        if((snakeSrv->x[snakeSrv->head]==*dotX)&&(snakeSrv->y[snakeSrv->head]==*dotY)){
+            snakeSrv->delay = 'Y';
+            snakeSrv->length += 1;
+            dotTouch = true;
+        }
+      }else{
+        //Client
+        if((snakeCli->x[snakeCli->head]==*dotX)&&(snakeCli->y[snakeCli->head]==*dotY)){
            snakeCli->delay = 'Y';
            snakeCli->length += 1;
            dotTouch = true;
-       }
-       //Server
-       if((snakeSrv->x[snakeSrv->head]==*dotX)&&(snakeSrv->y[snakeSrv->head]==*dotY)){
-           snakeSrv->delay = 'Y';
-           snakeSrv->length += 1;
-           if(dotTouch){ //Prevent tie
-               Serial.println("Tie / Snake tie from dot");
-               winLose(2);
-           }
-           dotTouch = true;
-       }
-       if(dotTouch){//Move dot to new location
-           pointDot(dotX,dotY);
-       }
+        }
+      }
+      
+      if(dotTouch){//Move dot to new location
+          pointDot(dotX,dotY);
+      }
        
        //Now that winLose conditions are complete, delay time
        delay(500);
