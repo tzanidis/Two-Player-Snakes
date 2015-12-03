@@ -409,16 +409,6 @@ void snake(int* dotX, int* dotY){
   //Start snakes
   while(!collision(snakeCli,snakeSrv)&&!time(iTime)){
         //Put snake code in here - That means moving snakes
-        
-        if(srv){ // read pin / determine srv or cli
-            Serial.println("pin HIGH Srv");
-            dirCli = readInput(oldDir);
-            dirSrv = syncSrv(dirSrv); // call appropriate functions
-        }else{
-            Serial.println("pin low cli");
-            dirSrv = readInput(oldDir);
-            dirCli = syncCli(dirCli); // call appropriate functions
-        }
        
       //Check for point dot function (prevents tie/player priority)
       //In theory, dot touch is not needed since collision already checks for tie
@@ -447,6 +437,48 @@ void snake(int* dotX, int* dotY){
        //Now that winLose conditions are complete, delay time
        delay(500);
        
+       //Read input, depends on whether is srv or cli
+-	   if(srv){
+-            Serial.println("pin HIGH Srv");
+-            dirSrv = readInput(oldDir);
+-			if(snakeSrv->delay=='Y'){
+-				//If delayed, send message with delay
+-				if(snakeSrv->delay = 'Y'){
+-					if(dirSrv=='U'){
+-						dirSrv = 'V';
+-					}else if(dirSrv=='D'){
+-						dirSrv = 'B';
+-					}else if(dirSrv=='L'){
+-						dirSrv = 'N';
+-					}else if(dirSrv=='R'){
+-						dirSrv = 'M';
+-					}
+-				}
+-				oldDir == dirSrv;
+-			}
+-			//If not delayed,,don't send message with delay
+-            dirCli = syncSrv(dirSrv); // call appropriate functions
+-        }else{
+-            Serial.println("pin low cli");
+-            dirCli = readInput(oldDir);
+-			if(snakeCli->delay=='Y'){
+-				//If delayed, send message with delay
+-				if(snakCliv->delay = 'Y'){
+-					if(dirCli=='U'){
+-						dirCli = 'V';
+-					}else if(dirCli=='D'){
+-						dirCli = 'B';
+-					}else if(dirCli=='L'){
+-						dirCli = 'N';
+-					}else if(dirCli=='R'){
+-						dirCli = 'M';
+-					}
+-				}
+-				oldDir == dirCli;
+-			}
+-            dirSrv = syncCli(dirCli); // call appropriate functions
+-        }
+       
        //If haven't eaten dot, delete tail and undraw
        //Client's Tail
        if(snakeCli->delay == 'N'){
@@ -467,6 +499,8 @@ void snake(int* dotX, int* dotY){
        }else{
             snakeSrv->delay = 'N';
        }
+       
+       //Move snake heads
        
        //Client
        if(dirCli == 'U'){//Up
