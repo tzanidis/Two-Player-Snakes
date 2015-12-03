@@ -49,6 +49,7 @@ bool waitOnSerial3(uint8_t nbytes, long timeout){
     while((Serial3.available() < nbytes) && (timeout < 0 || millis() < deadline)){
         delay(1);
     }
+    Serial.println("finish");
     return Serial3.available() >= nbytes;
 }//Done
 
@@ -239,7 +240,7 @@ char syncSrv(char mov){
             Serial.print("state = WFR");
             state = WFR;
         }else if(state == WFR){
-            if(listen('A')){
+            if(listen('A')||listen('S')){
                 Serial.println("state = LIS");
                 state = LIS;
             }else{
@@ -248,7 +249,7 @@ char syncSrv(char mov){
             }
         }else if(state == LIS){
             otherPlayerMov = listenDir();
-            if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R'){
+            if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R' || otherPlayerMov == 'S'){
                 Serial.println("state = STD");
                 sendChar('A');
                 state = STD;
@@ -268,13 +269,14 @@ char syncSrv(char mov){
 // argument: character, returns character
 char syncCli(char mov){
     typedef enum {LIS, WFR, SEND, D, ERR }State; //listen for their move / send that received, send our move, wait for received, tell done 
-    State state = SEND;
+    State state = LIS;
     char otherPlayerMov;
-    
+    Serial.println("Client says hi");
     while((state != D) || (state !=ERR)){
         if(state == LIS){
             otherPlayerMov = listenDir();
-            if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R'){
+            Serial.print(otherPlayerMov);
+            if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R'|| otherPlayerMov == 'S'){
                 Serial.println("state = SEND");
                 sendChar('A');
                 state = SEND;
@@ -284,7 +286,7 @@ char syncCli(char mov){
             Serial.println("state = WFR");
             state = WFR;
         }else if(state == WFR){
-            if(listen('A')){
+            if(listen('A')||listen('S')){
                 Serial.println("state = D");
                 state = D;
             }else{
@@ -335,6 +337,15 @@ void snake(int* dotX, int* dotY){
   snakeCli->y[3] = 37;
   snakeCli->y[4] = 37;
   
+	snakeSrv->head = 4;//4
+    snakeSrv->tail = 0;//0
+    snakeSrv->length = 5;//5
+    snakeSrv->delay = 'Y'; // 'Y' For eating the point dot, Y is yes, N is no
+  
+	snakeCli->head = 4;//4
+    snakeCli->tail = 0;//0
+    snakeCli->length = 5;//5
+    snakeCli->delay = 'Y'; // 'Y' For eating the point dot, Y is yes, N is no
   
   int iTime = millis(); //Initial time
   
@@ -545,7 +556,8 @@ void menuSrv(){
     if(digitalRead(SEL) == 1){
       //debug
       Serial.println("Start pressed");
-      sendChar('S');
+      //~ sendChar('S');
+      syncSrv('S');
       delay(50);
       //debug
       Serial.println("Call startup");
@@ -562,14 +574,15 @@ void menuCli(){
   tft.setTextColor(0xFFFF, 0x0000);
   tft.setCursor(0,0);
   tft.print("client");
-  tft.setCursor(50,72);
+  tft.setCursor(22,70);
   tft.print("Waiting");
-  tft.setCursor(58,70);
+  tft.setCursor(70,70);
   tft.print("For Host");
-  bool start = false;
-  while(!start){
-    start = listen('S');
-  }
+  //~ bool start = false;
+  //~ while(!start){
+    //~ start = listen('S');
+  //~ }
+  syncCli('S');
   Serial.println("Start heard");
   Serial.println("Call startup");
   startUp();
@@ -591,6 +604,8 @@ int main(){
   //setup pin
   pinMode(srvCliPin, INPUT);
   digitalWrite(srvCliPin, LOW);
+  pinMode(SEL, INPUT);
+  digitalWrite(SEL, LOW);
   
   if(digitalRead(srvCliPin) == HIGH){ // read pin / determine srv or cli
     Serial.println("pin HIGH Srv");
