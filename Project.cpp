@@ -233,20 +233,7 @@ bool collision(Snake* snakeCli, Snake* snakeSrv){
 bool time(int iTime){
     //int tempTime = millis();
     if((millis()-iTime)>90000){ //Constant timeout of 1 minute and 30 seconds
-          //Point system
-        if(snakeCli->length > snakeSrv->length){
-            //Client's snake is longer, therefore client wins
-            Serial.println("Client snake is longer");
-            winLose(1);
-        }else if(snakeSrv->length > snakeCli->length){
-            //Server's snake is longer, therefore server wins
-            Serial.println("Server snake is longer");
-            winLose(0);
-        }else{
-            //Snake lengths are equal. Tie.
-            Serial.println("Snakes are of equal length");
-            winLose(2);
-        }
+          //Point system located after snake() while loop
         return true;
     }
     return false;
@@ -504,6 +491,22 @@ void snake(int* dotX, int* dotY){
        tft.fillRect((snakeSrv->x[snakeSrv->head]*3)+3,(snakeSrv->y[snakeSrv->head]*3)+19,3,3,0xFFFF); //0 = black
        
   }
+  if(time(iTime)){
+	  //Timeout indicated
+		if(snakeCli->length > snakeSrv->length){
+            //Client's snake is longer, therefore client wins
+            Serial.println("Client snake is longer");
+            winLose(1);
+        }else if(snakeSrv->length > snakeCli->length){
+            //Server's snake is longer, therefore server wins
+            Serial.println("Server snake is longer");
+            winLose(0);
+        }else{
+            //Snake lengths are equal. Tie.
+            Serial.println("Snakes are of equal length");
+            winLose(2);
+        }
+	}
 }
 
 //Startup()
