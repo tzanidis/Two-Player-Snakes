@@ -103,6 +103,10 @@ void pointDot(int* x, int* y){
  }
 
 char readInput(char oldChar){
+	//TODO: Can't move backwards, otherwise crash into itself
+	
+	
+	//IMPORTANT!!
     int horizontal = analogRead(HORIZ); //0-1024, left to right
     int vertical = analogRead(VERT);//0-1024, up to down
     int delta_horizontal = abs(horizontal - init_horiz);
@@ -167,6 +171,11 @@ void winLose(int val){
 
 
 bool collision(Snake* snakeCli, Snake* snakeSrv){
+	//TODO: Collision on itself
+	
+	
+	
+	//IMPORTANT!!
     //Check for walls
     if((snakeCli->x[snakeCli->head]<0)
     ||(snakeCli->x[snakeCli->head]>39)
