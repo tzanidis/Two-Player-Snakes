@@ -232,14 +232,16 @@ char syncSrv(char mov){
     typedef enum {SEND, WFR, STL, LIS, STD, ERR }State; //send, wait for received, send that listening, listen, wait for done. 
     State state = SEND;
     char otherPlayerMov;
+    char comp;
     
-    while((state != STD) || (state !=ERR)){
+    while((state != STD) && (state !=ERR)){
         if(state == SEND){
             sendChar(mov);
             Serial.println("state = WFR");
             state = WFR;
         }else if(state == WFR){
-            if(listen('A') || listen('S')){
+			comp = listenDir();
+            if(comp=='A' || comp=='S'){
                 Serial.println("state = LIS");
                 state = LIS;
             }else{
@@ -270,12 +272,12 @@ char syncCli(char mov){
     typedef enum {LIS, WFR, SEND, D, ERR }State; //listen for their move / send that received, send our move, wait for received, tell done 
     State state = LIS;
     char otherPlayerMov;
-    
-    while((state != D) || (state !=ERR)){
+    char comp;
+    while((state != D) && (state !=ERR)){
         if(state == LIS){
             otherPlayerMov = listenDir();
-            Serial.println("im here?")
-            if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R' || otherPlayerMov == 'D'){
+            Serial.println("im here?");
+            if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R' || otherPlayerMov == 'S'){
                 Serial.println("state = SEND");
                 sendChar('A');
                 state = SEND;
@@ -285,7 +287,8 @@ char syncCli(char mov){
             Serial.println("state = WFR");
             state = WFR;
         }else if(state == WFR){
-            if(listen('A') || listen('S')){
+			comp = listenDir();
+            if(comp=='A' || comp=='S'){
                 Serial.println("state = D");
                 state = D;
             }else{
@@ -368,12 +371,12 @@ void snake(int* dotX, int* dotY){
         
         if(srv){ // read pin / determine srv or cli
             Serial.println("pin HIGH Srv");
-            dirSrv = readInput(oldDir);
-            dirCli = syncSrv(dirSrv); // call appropriate functions
+            dirCli = readInput(oldDir);
+            dirSrv = syncSrv(dirSrv); // call appropriate functions
         }else{
             Serial.println("pin low cli");
-            dirCli = readInput(oldDir);
-            dirSrv = syncCli(dirCli); // call appropriate functions
+            dirSrv = readInput(oldDir);
+            dirCli = syncCli(dirCli); // call appropriate functions
         }
        
        //Check for point dot function (prevents tie/player priority)
@@ -489,6 +492,11 @@ void snake(int* dotX, int* dotY){
 //After client and server are set up, initialize screen, board, and snake.
 //Run snake() as last statement
 void startUp(){
+	//Clear Buffer
+	while(Serial3.available()>0){
+		char dump = Serial3.read();
+	}
+	
   tft.setTextColor(0xFFFF, 0x0000);
   
   //Draw boundaries
@@ -556,13 +564,13 @@ void menuSrv(){
     if(digitalRead(SEL) == 1){
       //debug
       Serial.println("Start pressed");
-      syncSrv('S');
+      char dump = syncSrv('S');
       //sendChar('S');
       //debug
       Serial.println("Call startup");
       startUp();
+      break;
     }
-    delay(200);
   }
 }//Done
 
@@ -581,7 +589,7 @@ void menuCli(){
   //~ while(!start){
     //~ start = listen('S');
   //~ }
-  syncCli('S');
+  char dump = syncCli('S');
   Serial.println("Start heard");
   Serial.println("Call startup");
   startUp();
@@ -596,6 +604,7 @@ int main(){
   tft.initR(INITR_BLACKTAB);
   
   Serial.begin(9600);
+  Serial3.begin(9600);
   
   randomSeed(analogRead(4));
   
@@ -614,5 +623,6 @@ int main(){
     menuCli(); // call appropriate functions
   }
   
+  Serial3.end();
   Serial.end();
 }
