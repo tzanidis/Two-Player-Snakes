@@ -1,0 +1,265 @@
+/*
+
+  * Assignment 1 part 2 submission.
+
+  * Authors:
+  * Christopher Tzanidis
+  * Henry Lo
+
+  * Chats between two Arduinos and PCs
+
+  * read README for code ownership.
+*/
+
+#include <Arduino.h>
+
+//mulMod  -  Multiplies a by b and mods the product by m.
+uint32_t mulMod(uint32_t a, uint32_t b, uint32_t m){ 
+  uint32_t A = 0; // sum of all as'
+  for(int i = 0; i < 31; ++i){
+    A = (A+(((a<<(31-i))>>31)*b))%m; // takes total sum of all as' moded by b
+    b = (b<<1)%m; // doubles b for every a shift because of increasing exponents
+  }
+  return A;
+}
+
+//powMod  -  does the calculation b to the power of p moded by m.
+uint32_t powMod(uint32_t b, uint32_t p, uint32_t m){
+  uint32_t r = 1; //result
+	uint32_t bM = b%m; // base moded
+	const int binaryLength = 32;
+  
+	for(int i = 0; i < binaryLength; i++){
+    if((p & (1ul << i)) != 0){ // if the binary digit i of integer p is 1:
+			r =mulMod(r,bM,m); // call mulMod
+		}
+		bM = mulMod(bM,bM,m); // call mulMod
+	}
+  return r%m;
+}
+
+//waitOnSerial3  -  times out if nothing is read within the time.
+bool waitOnSerial3(uint8_t nbytes, long timeout){
+  unsigned long deadline = millis() + timeout;
+  while ((Serial3.available() < nbytes) && (timeout < 0 || millis() < deadline)){
+    delay(1);
+  }
+  return Serial3.available()>=nbytes;
+}
+
+//send  -  sends to other arduino the our personal key.
+void uint32ToSerial3(uint32_t CSkey){
+  Serial3.write((char) (CSkey >> 0));
+  Serial3.write((char) (CSkey >> 8));
+  Serial3.write((char) (CSkey >> 16));
+  Serial3.write((char) (CSkey >> 24));
+  Serial.print("key sent"); Serial.println(CSkey);
+}
+
+//send  - sends to other arduino char 'A' or 'C'.
+void send(char CAchar){
+	Serial3.write(CAchar);
+  Serial.print("char sent"); Serial.println(CAchar);
+}
+
+uint32_t uint32FromSerial3(){
+  uint32_t num = 0;
+  num = num | ((uint32_t) Serial3.read()) << 0;
+  num = num | ((uint32_t) Serial3.read()) << 8;
+  num = num | ((uint32_t) Serial3.read()) << 16;
+  num = num | ((uint32_t) Serial3.read()) << 24;
+  return num;
+}
+
+//listen  -  listens for the other arduinos personal key.
+uint32_t listen(){
+  uint32_t num = 0;
+  Serial.print("Begin timeout ");
+  if(waitOnSerial3(4,1000)){ // calls timeout
+    num = uint32FromSerial3();
+    Serial.print(" NUM HEARD: "); Serial.println(num);
+    return num;
+  }
+  Serial.println("End timeout");
+  return num;
+}
+
+//listen  - listens for char 'A' or 'C'.
+bool listen(char CAchar){
+	if(waitOnSerial3(1,1000)){
+    char c = Serial3.read();
+    Serial.print("char heard "); Serial.println(c);
+    if(c == CAchar){
+      return true;
+    }
+  }
+  return false;
+}
+
+//nextKey  -  finds the next sequence of key from the original shared key.
+uint32_t nextKey(uint32_t current_key) {
+  const uint32_t modulus = 0x7FFFFFFF; // 2^31-1
+  const uint32_t consta = 48271; // we use that this is <=15 bits
+  uint32_t lo = consta*(current_key & 0xFFFF);  
+  uint32_t hi = consta*(current_key >> 16); 
+  lo += (hi & 0x7FFF)<<16;
+  lo += hi>>15;
+  if (lo > modulus) lo -= modulus;
+  return lo;
+}
+
+//chat  -  begins encrypted communication between two arduino boards.
+void chat(uint32_t k){
+  uint32_t l = k; // k is encrypted/sending , l is decrypted/receiving
+  int incomingByte = 0;
+  int decryptedByte;
+  
+  while(true){
+    incomingByte = Serial3.read();
+    if(incomingByte!=-1){
+      decryptedByte = incomingByte + l; // decrypt byte
+      if(decryptedByte==10 || decryptedByte==13){ // check for <ENTER>
+          Serial.write(13);
+          Serial.write(10);
+      }else{
+        Serial.write((char)decryptedByte); // print to the PC screen
+      }
+      l = nextKey(l); // calls nextKey derived by l
+    }
+    incomingByte = Serial.read();
+    if(incomingByte!=-1){
+      int byteToSend = incomingByte - k; // encrypt byte
+      Serial3.write((char)byteToSend); // send byte to other Arduino
+      k = nextKey(k); // calls nextKey derived by k
+    }
+  }
+}
+
+void newShareClient(uint32_t ckey, uint32_t p, uint32_t m){
+	typedef enum {START, WFA, DEXCH, ERR} State;
+	char* StateNames[] = {"START","WFA","DEXCH","ERR"};
+  State state = START;
+  uint32_t skey = 0;
+	while((state != DEXCH) && (state != ERR)){
+		if(state == START){
+			send('C');
+      uint32ToSerial3(ckey);
+      state = WFA;
+			Serial.println("state is WFA");
+		}else if (state == WFA){
+      if(listen('A')){
+        skey = listen(); //check / store skey
+        Serial.println("print skey"); Serial.println(skey);
+        Serial.print("This his/hers public key: "); Serial.println(skey);
+      }else{
+        state = START;
+      }
+      if(skey != 0){  //if the Askey is passed through
+        send('A');
+        Serial.println("sent A");
+        state = DEXCH;
+        Serial.println("state is DEXCH");
+      }else{
+        state = START;
+        Serial.println("state is START");
+      }
+		}else{
+      Serial.println("error in client"); 
+      state = ERR;
+		}
+	}
+  
+  if(state == DEXCH){
+    uint32_t k = powMod(skey,p,m);
+    Serial.print("This the secret key: "); Serial.println(k);
+    chat(nextKey(k));
+  }
+}
+
+void newShareSrv(uint32_t skey, uint32_t p, uint32_t m){
+	typedef enum {LIS, WFK, WFA, DEXCH, ERR} State;
+	char* StateNames[] = {"LIS","WFK","WFA","DEXCH","ERR"};
+	State state = LIS;
+	uint32_t ckey = 0;
+	while((state != DEXCH) && (state != ERR)){
+		if(state == LIS){
+      if(listen('C')){  //if C is passed through
+        ckey = listen();
+        state = WFK;
+        //~ Serial.println("state is WFK");
+      }
+		}else if (state == WFK){
+      if(ckey != 0){  //if ckey is passed through
+        send('A'); uint32ToSerial3(skey);
+        state = WFA;
+        //~ Serial.println("state is WFA");
+      }
+		}else if ((state == WFA) && (listen('A'))){
+      state = DEXCH;
+    }else if ((state == WFA) && (listen('C'))){
+      state = WFK;
+		}else{
+			Serial.println("error in srv");
+		}
+	}
+  
+  if(state == DEXCH){
+    uint32_t k = powMod(ckey,p,m);
+    Serial.print("This the secret key: "); Serial.println(k);
+    chat(nextKey(k));
+  } 
+}
+
+//genKey  -  generates personal key and determines wether its a srv or cli then calls a share.
+void genKey(){
+  uint32_t b = 2147483647;     //prime in Dieffie-Hellman
+  uint32_t m = 16807; //generator in Dieffie-Hellman
+  uint32_t p; //= rand()%2147483647 + 0; //choose private key
+  for(int i = 0; i < 10; ++i){
+    p += analogRead(1) * (10 * i);
+    delay(50);
+  }
+  Serial.print("rand number is: "); Serial.println(p);
+  uint32_t A = powMod(b,p,m);
+  Serial.print("This my public key: "); Serial.println(A);
+  
+  //setup pin
+  int srvCliPin = 13;
+  pinMode(srvCliPin, INPUT);
+  digitalWrite(srvCliPin, LOW);
+  
+  if(digitalRead(srvCliPin) == HIGH){ // read pin / determine srv or cli
+    Serial.println("pin HIGH newShareSrv");
+    newShareSrv(A, p, m); // call appropriate share
+  }else{
+    Serial.println("pin low newSharecli");
+    newShareClient(A, p, m); // call appropriate share
+  }
+}
+
+//main.
+int main(void) {
+  {
+  // Initialise Arduino functionality
+  init();
+  // Attach USB for applicable processors
+  #ifdef USBCON
+     USBDevice.attach();
+  #endif
+  }
+
+  Serial.begin(9600); // Serial0: communication with the PC
+  Serial3.begin(9600); // Serial3: communication with the other Arduino
+  
+  randomSeed(analogRead(0)); // makes the random() function different everytime.
+  
+  //~ uint32_t g = powMod(2147483647,9999,16807);
+  //~ Serial.println(random(0,2147483647));
+  
+  genKey(); //calls genkey
+  
+  Serial.end();
+  Serial3.end();
+
+  return 0;
+}
