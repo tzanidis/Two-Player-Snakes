@@ -108,49 +108,43 @@ void pointDot(int* x, int* y){
 char readInput(char oldChar){
     int horizontal = analogRead(HORIZ); //0-1024, left to right
     int vertical = analogRead(VERT);//0-1024, up to down
-    int delta_horizontal = horizontal - init_horiz;
-    int delta_vertical = vertical - init_vert;
+    int delta_horizontal = abs(horizontal - init_horiz);
+    int delta_vertical = abs(vertical - init_vert);
     //case 3: no input is entered
-    if((delta_horizontal == 0)&&(delta_vertical == 0)){
+    if((horizontal==init_horiz)&&(vertical==init_vert)){
         return oldChar;
     }else
     //case 1: horizontal is larger than vertical or equal
-    if(abs(delta_horizontal) >= abs(delta_vertical)){//Go horizontal
-        //Left
-        if(delta_horizontal<-300){
-            if(oldChar == 'R'){
-              return 'R';
-            }
-            return 'L';
+    if(delta_horizontal >= delta_vertical){//Go horizontal
+      //Left
+      if(horizontal < init_horiz){
+        if(oldChar == 'R'){
+          return 'R';
         }
-        //Right
-        else if(delta_horizontal > 300){
-            if(oldChar == 'L'){
+        return 'L';
+      }else{//Right
+          if(oldChar == 'L'){
               return 'L';
             }
             return 'R';
-        }else{
-			return oldChar;
-		}
+        }
     }else
     //case 2: vertical is larger than horizontal
     {//(delta_vertical > delta_horizontal) Go vertical
         //Up
-        if(delta_vertical < -300){
+        if(vertical < init_vert){
             if(oldChar == 'D'){
               return 'D';
             }
             return 'U';
         }
         //Down
-        else if(delta_vertical > 300){
+        else{
           if(oldChar == 'U'){
               return 'U';
             }
             return 'D';
-        }else{
-			return oldChar;
-		}
+        }
     }
 }
 
@@ -171,12 +165,12 @@ void winLose(int val){
     tft.setCursor(49,84);
     tft.print("Wins!");
   }else{//tie
-    Serial.print("Tie");
+    Serial.println("Tie");
     tft.setCursor(46,76);
     tft.print("It's a");
-    tft.setCursor(42,84);
+    tft.setCursor(52,84);
     tft.print("Tie!");
-      
+  (62,80);
   }
   //Tell to press reset key
   tft.setCursor(0,0);
@@ -453,8 +447,8 @@ void snake(int* dotX, int* dotY){
         }
       }
       oldDir = dirSrv;
-    //If not delayed,,don't send message with delay
-    dirCli = syncSrv(dirSrv); // call appropriate functions
+      //If not delayed,,don't send message with delay
+      dirCli = syncSrv(dirSrv); // call appropriate functions
     }else{
       Serial.println("pin low cli");
       dirCli = readInput(oldDir);
@@ -509,9 +503,9 @@ void snake(int* dotX, int* dotY){
       snakeCli->y[(snakeCli->head+1)%50] = snakeCli->y[snakeCli->head];
     }
     if(dirCli == 'D'){//Down
-    //Transfer coordinates to new head
-    snakeCli->y[(snakeCli->head+1)%50] = snakeCli->y[snakeCli->head] + 1;
-    snakeCli->x[(snakeCli->head+1)%50] = snakeCli->x[snakeCli->head];
+      //Transfer coordinates to new head
+      snakeCli->y[(snakeCli->head+1)%50] = snakeCli->y[snakeCli->head] + 1;
+      snakeCli->x[(snakeCli->head+1)%50] = snakeCli->x[snakeCli->head];
     }
     if(dirCli == 'L'){//Left
       //Transfer coordinates to new head
@@ -570,11 +564,13 @@ void snake(int* dotX, int* dotY){
 //After client and server are set up, initialize screen, board, and snake.
 //Run snake() as last statement
 void startUp(){
-	//Clear Buffer
-	while(Serial3.available()>0){
-		char dump = Serial3.read();
-	}
-	tft.fillScreen(0x0000);
+  
+  //Clear Buffer
+  while(Serial3.available()>0){
+    char dump = Serial3.read();
+  }
+  
+  tft.fillScreen(0x0000);
   tft.setTextColor(0xFFFF, 0x0000);
   
   //Draw boundaries
@@ -659,7 +655,7 @@ void menuCli(){
   tft.setCursor(0,0);
   tft.print("client");
   tft.setCursor(50,72);
-  tft.println("Waiting");
+  tft.print("Waiting");
   tft.setCursor(50,80);
   tft.print("For Host");
   char dump = syncCli('S');
