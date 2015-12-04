@@ -22,20 +22,18 @@ const int init_vert = analogRead(VERT);
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 
 typedef struct {//size is 50 by default
-    int x[50];
-    int y[50];
-    int head;//4
-    int tail;//0
-    int length;//5
-    char delay; // 'Y' For eating the point dot, Y is yes, N is no
-} Snake;
+  int x[50];
+  int y[50];
+  int head;//4
+  int tail;//0
+  int length;//5
+  char delay; // 'Y' For eating the point dot, Y is yes, N is no
+}Snake;
 
 //Create snakes - 2d array
 //call with snakeCli[i][j]
 Snake* snakeCli = (Snake*) malloc(sizeof(Snake));
 Snake* snakeSrv = (Snake*) malloc(sizeof(Snake));
-assert(snakeCli != NULL);
-assert(snakeSrv != NULL);
 
 void sendChar(char msg){
   //Start = S
@@ -55,11 +53,11 @@ void sendChar(char msg){
 }//Done
 
 bool waitOnSerial3(uint8_t nbytes, long timeout){
-    unsigned long deadline = millis() + timeout;
-    while((Serial3.available() < nbytes) && (timeout < 0 || millis() < deadline)){
-        delay(1);
-    }
-    return Serial3.available() >= nbytes;
+  unsigned long deadline = millis() + timeout;
+  while((Serial3.available() < nbytes) && (timeout < 0 || millis() < deadline)){
+    delay(1);
+  }
+  return Serial3.available() >= nbytes;
 }//Done
 
 bool listen(char c){
@@ -87,10 +85,10 @@ char listenDir(){
 //Finds random position to place dot
 //Used for x coord and y coord
 int randomDot(){
-    int r = random(40); //0 - 39
-    //debug
-    Serial.print("random num generated: "); Serial.println(r);
-    return r;
+  int r = random(40); //0 - 39
+  //debug
+  Serial.print("random num generated: "); Serial.println(r);
+  return r;
 }//Done
 
 //pointDot()
@@ -102,54 +100,51 @@ void pointDot(int* x, int* y){
   *x = randomDot();
   *y = randomDot();
   //draw dot
-  tft.fillCircle((*x*3)+3, (*y*3)+19, 2, 0xFFFF);
+  tft.fillCircle((*x*3)+3, (*y*3)+19, 1, 0xFFFF);
   //debug
   Serial.print("point generated at x: "); Serial.print(*x);Serial.print(" and y: ");Serial.println(*y);
  }
 
 char readInput(char oldChar){
-    int horizontal = analogRead(HORIZ); //0-1024, left to right
-    int vertical = analogRead(VERT);//0-1024, up to down
-    int delta_horizontal = abs(horizontal - init_horiz);
-    int delta_vertical = abs(vertical - init_vert);
-    //case 3: no input is entered
-    if((horizontal==init_horiz)&&(vertical==init_vert)){
-        return oldChar;
-    }else
+  int horizontal = analogRead(HORIZ); //0-1024, left to right
+  int vertical = analogRead(VERT);//0-1024, up to down
+  int delta_horizontal = horizontal - init_horiz;
+  int delta_vertical = vertical - init_vert;
+  //case 3: no input is entered
+  if(abs(delta_horizontal) >= abs(delta_vertical)){//Go horizontal
     //case 1: horizontal is larger than vertical or equal
-    if(delta_horizontal >= delta_vertical){//Go horizontal
-        //Left
-        if(horizontal < init_horiz){
-            if(oldChar == 'R'){
-              return 'R';
-            }
-            return 'L';
-        }
-        //Right
-        else{
-            if(oldChar == 'L'){
-              return 'L';
-            }
-            return 'R';
-        }
-    }else
-    //case 2: vertical is larger than horizontal
-    {//(delta_vertical > delta_horizontal) Go vertical
-        //Up
-        if(vertical < init_vert){
-            if(oldChar == 'D'){
-              return 'D';
-            }
-            return 'U';
-        }
-        //Down
-        else{
-          if(oldChar == 'U'){
-              return 'U';
-            }
-            return 'D';
-        }
+    //Left
+    if(delta_horizontal<-300){
+      if(oldChar == 'R'){
+        return 'R';
+      }
+      return 'L';
+    }else if(delta_horizontal > 300){//Right
+      if(oldChar == 'L'){
+        return 'L';
+      }
+      return 'R';
+    }else{
+      return oldChar;
     }
+  }else{
+    //case 2: vertical is larger than horizontal
+    //(delta_vertical > delta_horizontal) Go vertical
+    //Up
+    if(delta_vertical < -300){
+      if(oldChar == 'U'){
+        return 'U';
+      }
+      return 'D';
+    }else if(delta_vertical > 300){//Down
+      if(oldChar == 'D'){
+        return 'D';
+      }
+      return 'U';
+    }else{
+      return oldChar;
+    }
+  }
 }
 
 //Winlose is called inside collision(), or after time() returns true 
@@ -157,200 +152,196 @@ char readInput(char oldChar){
 void winLose(int val){
   tft.fillScreen(0x0000);
   if(val == 1){//srv win
-      Serial.println("Host / Srv wins");
-      tft.setCursor(72,56);
-      //~ tft.println("Host");
-      tft.setCursor(80,54);
-      tft.print("Wins!");
+    Serial.println("Host / Srv wins");
+    tft.setCursor(52,76);
+    tft.print("Host");
+    tft.setCursor(49,84);
+    tft.print("Wins!");
   }else if(val == 0){//cli win
-      Serial.println("Client wins");
-      tft.setCursor(72,52);
-      tft.println("Client");
-      //~ tft.setCursor(80,54);
-      tft.print("Wins!");
+    Serial.println("Client wins");
+    tft.setCursor(46,76);
+    tft.print("Client");
+    tft.setCursor(49,84);
+    tft.print("Wins!");
   }else{//tie
-      Serial.println("Tie");
-      tft.setCursor(72,52);
-      tft.println("It's a");
-      //~ tft.setCursor(80,56);
-      tft.print("Tie!");
+    Serial.print("Tie");
+    tft.setCursor(46,76);
+    tft.print("It's a");
+    tft.setCursor(42,84);
+    tft.print("Tie!");
       
   }
   //Tell to press reset key
-  tft.setCursor(152,0);
+  tft.setCursor(0,0);
   tft.print("Press Reset");
   Serial.println("Draw Screen, tell to reset.");
 }//Done
 
 
 bool collision(Snake* snakeCli, Snake* snakeSrv){
-	//TODO: Collision on itself
-	
-	
-	
-	//IMPORTANT!!
-    //Check for walls
-    if((snakeCli->x[snakeCli->head]<0)
-    ||(snakeCli->x[snakeCli->head]>39)
-    ||(snakeCli->y[snakeCli->head]<0)
-    ||(snakeCli->y[snakeCli->head]>39)){
-        //Snake client hit a wall
-        Serial.print("Srv Win / Snake client has hit a wall at x: "); Serial.print(snakeCli->x[snakeCli->head]); Serial.print(", y: "); Serial.println(snakeCli->y[snakeCli->head]);
-        winLose(1);
-        return true;
+//TODO: Collision on itself
+//IMPORTANT!!
+  //Check for walls
+  if((snakeCli->x[snakeCli->head]<0)
+  ||(snakeCli->x[snakeCli->head]>39)
+  ||(snakeCli->y[snakeCli->head]<0)
+  ||(snakeCli->y[snakeCli->head]>39)){
+    //Snake client hit a wall
+    Serial.print("Srv Win / Snake client has hit a wall at x: "); Serial.print(snakeCli->x[snakeCli->head]); Serial.print(", y: "); Serial.println(snakeCli->y[snakeCli->head]);
+    winLose(1);
+    return true;
+  }
+  if((snakeSrv->x[snakeSrv->head]<0)
+  ||(snakeSrv->x[snakeSrv->head]>39)
+  ||(snakeSrv->y[snakeSrv->head]<0)
+  ||(snakeSrv->y[snakeSrv->head]>39)){
+    //Snake server hit a wall
+    Serial.print("Cli Win / Snake server has hit a wall at x: "); Serial.print(snakeSrv->x[snakeSrv->head]); Serial.print(", y: "); Serial.println(snakeSrv->y[snakeSrv->head]);
+    winLose(0);
+    return true;
+  }
+   
+  //Check for collision with other snake
+  //Snake heads collide
+  if((snakeCli->x[snakeCli->head]==snakeSrv->x[snakeSrv->head])&&(snakeCli->y[snakeCli->head]==snakeSrv->y[snakeSrv->head])){
+    Serial.println("Tie / Snakes heads collided");
+    winLose(2);
+    return true;
+  }
+  
+  //Snake client's head into other snake
+  int tempTail = snakeSrv->tail;
+  int tempHead = (snakeSrv->head+1)%50;
+  while(tempTail!=tempHead){
+    if(snakeCli->x[snakeCli->head]==snakeSrv->x[tempTail] //Checks x
+    &&snakeCli->y[snakeCli->head]==snakeSrv->y[tempTail]){ //Checks y
+      //If both are true, then snake collision is true
+      Serial.print("Srv Win / Snake client has hit other snake at x: "); Serial.print(snakeCli->x[snakeCli->head]); Serial.print(", y: "); Serial.println(snakeCli->y[snakeCli->head]);
+      winLose(1);
+      return true;
     }
-    if((snakeSrv->x[snakeSrv->head]<0)
-    ||(snakeSrv->x[snakeSrv->head]>39)
-    ||(snakeSrv->y[snakeSrv->head]<0)
-    ||(snakeSrv->y[snakeSrv->head]>39)){
-        //Snake server hit a wall
-        Serial.print("Cli Win / Snake server has hit a wall at x: "); Serial.print(snakeSrv->x[snakeSrv->head]); Serial.print(", y: "); Serial.println(snakeSrv->y[snakeSrv->head]);
-        winLose(0);
-        return true;
+    tempTail = (tempTail + 1)%50;
+  }
+    
+  //Snake server's head into other snake
+  tempTail = snakeCli->tail;
+  tempHead = (snakeCli->head+1)%50;
+  while(tempTail!=tempHead){
+    if((snakeSrv->x[snakeSrv->head]==snakeCli->x[tempTail]) //Checks x
+    &&(snakeSrv->y[snakeSrv->head]==snakeCli->y[tempTail])){ //Checks y
+      //If both are true, then snake collision is true
+      Serial.print("Cli Win / Snake server has hit other snake at x: "); Serial.print(snakeSrv->x[snakeSrv->head]); Serial.print(", y: "); Serial.println(snakeSrv->y[snakeSrv->head]);
+      winLose(0);
+      return true;
     }
-    
-    //Check for collision with other snake
-    
-    //Snake heads collide
-    if((snakeCli->x[snakeCli->head]==snakeSrv->x[snakeSrv->head])&&(snakeCli->y[snakeCli->head]==snakeSrv->y[snakeSrv->head])){
-        Serial.println("Tie / Snakes heads collided");
-        winLose(2);
-        return true;
-    }
-    
-    //Snake client's head into other snake
-    int tempTail = snakeSrv->tail;
-    int tempHead = (snakeSrv->head+1)%50;
-    while(tempTail!=tempHead){
-        if(snakeCli->x[snakeCli->head]==snakeSrv->x[tempTail] //Checks x
-        &&snakeCli->y[snakeCli->head]==snakeSrv->y[tempTail]){ //Checks y
-        //If both are true, then snake collision is true
-            Serial.print("Srv Win / Snake client has hit other snake at x: "); Serial.print(snakeCli->x[snakeCli->head]); Serial.print(", y: "); Serial.println(snakeCli->y[snakeCli->head]);
-            winLose(1);
-            return true;
-        }
-        tempTail = (tempTail + 1)%50;
-    }
-    
-    //Snake server's head into other snake
-    tempTail = snakeCli->tail;
-    tempHead = (snakeCli->head+1)%50;
-    while(tempTail!=tempHead){
-        if((snakeSrv->x[snakeSrv->head]==snakeCli->x[tempTail]) //Checks x
-        &&(snakeSrv->y[snakeSrv->head]==snakeCli->y[tempTail])){ //Checks y
-        //If both are true, then snake collision is true
-            Serial.print("Cli Win / Snake server has hit other snake at x: "); Serial.print(snakeSrv->x[snakeSrv->head]); Serial.print(", y: "); Serial.println(snakeSrv->y[snakeSrv->head]);
-            winLose(0);
-            return true;
-        }
-        tempTail = (tempTail + 1)%50;
-    }
-    
-    //No collision
-    return false;
+    tempTail = (tempTail + 1)%50;
+  }
+  
+  //No collision
+  return false;
 }
 
 //Bool time FeelsBadMan
 //Returns true if time is up, otherwise return false
 bool time(int iTime){
-    //int tempTime = millis();
-    if((millis()-iTime)>90000){ //Constant timeout of 1 minute and 30 seconds
-          //Point system located after snake() while loop
-        return true;
-    }
-    return false;
+  //int tempTime = millis();
+  if((millis()-iTime)>90000){ //Constant timeout of 1 minute and 30 seconds
+    //Point system located after snake() while loop
+    return true;
+  }
+  return false;
 }
 
 // syncSrv()
 // sends and receives characters as the server arduino
 // argument: character, returns character
 char syncSrv(char mov){
-    typedef enum {SEND, WFR, STL, LIS, STD, ERR }State; //send, wait for received, send that listening, listen, wait for done. 
-    State state = SEND;
-    char otherPlayerMov;
-    char comp;
-    
-    while((state != STD) && (state !=ERR)){
-        if(state == SEND){
-            sendChar(mov);
-            Serial.println("state = WFR");
-            state = WFR;
-        }else if(state == WFR){
-			comp = listenDir();
-            if(comp=='A' || comp=='S'){
-                Serial.println("state = LIS");
-                state = LIS;
-            }else{
-                Serial.println("state = SEND");
-                state = SEND;
-            }
-        }else if(state == LIS){
-            otherPlayerMov = listenDir();
-            if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R' || otherPlayerMov == 'S'){
-                Serial.println("state = STD");
-                sendChar('A');
-                state = STD;
-            }else if(otherPlayerMov == 'V' || otherPlayerMov == 'B' ||otherPlayerMov == 'N' ||otherPlayerMov == 'M'){
-                Serial.println("state = STD + len");
-                sendChar('A');
-                snakeCli->length +=1;
-                snakeCli->delay = 'Y';
-                state = STD;
-            }
-        }else{
-            Serial.println("state = ERR");
-            state = ERR;
+  typedef enum {SEND, WFR, STL, LIS, STD, ERR }State; //send, wait for received, send that listening, listen, wait for done. 
+  State state = SEND;
+  char otherPlayerMov;
+  char comp;
+  
+  while((state != STD) && (state !=ERR)){
+    if(state == SEND){
+      sendChar(mov);
+      //~ Serial.println("state = WFR");
+      state = WFR;
+    }else if(state == WFR){
+      comp = listenDir();
+      if(comp=='A' || comp=='S'){
+        //~ Serial.println("state = LIS");
+        state = LIS;
+      }else{
+        //~ Serial.println("state = SEND");
+        state = SEND;
+      }
+    }else if(state == LIS){
+      otherPlayerMov = listenDir();
+        if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R' || otherPlayerMov == 'S'){
+          //~ Serial.println("state = STD");
+          sendChar('A');
+          state = STD;
+        }else if(otherPlayerMov == 'V' || otherPlayerMov == 'B' ||otherPlayerMov == 'N' ||otherPlayerMov == 'M'){
+          //~ Serial.println("state = STD + len");
+          sendChar('A');
+          snakeCli->length +=1;
+          snakeCli->delay = 'Y';
+          state = STD;
         }
+    }else{
+      //~ Serial.println("state = ERR");
+      state = ERR;
     }
-    Serial.println("Sync done");
-    Serial.print("other players movement: ");Serial.println(otherPlayerMov);
-    return otherPlayerMov;
+  }
+  Serial.println("Sync done");
+  Serial.print("other players movement: ");Serial.println(otherPlayerMov);
+  return otherPlayerMov;
 }
 
 // syncCli()
 // sends and receives characters as the client arduino
 // argument: character, returns character
 char syncCli(char mov){
-    typedef enum {LIS, WFR, SEND, D, ERR }State; //listen for their move / send that received, send our move, wait for received, tell done 
-    State state = LIS;
-    char otherPlayerMov;
-    char comp;
-    while((state != D) && (state !=ERR)){
-        if(state == LIS){
-            otherPlayerMov = listenDir();
-            Serial.println("im here?");
-            if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R' || otherPlayerMov == 'S'){
-                Serial.println("state = SEND");
-                sendChar('A');
-                state = SEND;
-            }else if(otherPlayerMov == 'V' || otherPlayerMov == 'B' ||otherPlayerMov == 'N' ||otherPlayerMov == 'M'){
-                Serial.println("state = STD + len");
-                sendChar('A');
-                snakeSrv->length +=1;
-                snakeSrv->delay = 'Y';
-                state = STD;
-            }
-        }else if(state == SEND){
-            sendChar(mov);
-            Serial.println("state = WFR");
-            state = WFR;
-        }else if(state == WFR){
-			comp = listenDir();
-            if(comp=='A' || comp=='S'){
-                Serial.println("state = D");
-                state = D;
-            }else{
-                Serial.println("state = SEND");
-                state = SEND;
-            }
-        }else{
-            Serial.println("state = ERR");
-            state = ERR;
-        }
+  typedef enum {LIS, WFR, SEND, D, ERR }State; //listen for their move / send that received, send our move, wait for received, tell done 
+  State state = LIS;
+  char otherPlayerMov;
+  char comp;
+  while((state != D) && (state !=ERR)){
+    if(state == LIS){
+      otherPlayerMov = listenDir();
+      //~ Serial.println("im here?");
+      if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R' || otherPlayerMov == 'S'){
+        //~ Serial.println("state = SEND");
+        sendChar('A');
+        state = SEND;
+      }else if(otherPlayerMov == 'V' || otherPlayerMov == 'B' ||otherPlayerMov == 'N' ||otherPlayerMov == 'M'){
+        //~ Serial.println("state = STD + len");
+        sendChar('A');
+        snakeSrv->length +=1;
+        snakeSrv->delay = 'Y';
+        state = SEND;
+      }
+    }else if(state == SEND){
+      sendChar(mov);
+      //~ Serial.println("state = WFR");
+      state = WFR;
+    }else if(state == WFR){
+      comp = listenDir();
+      if(comp=='A' || comp=='S'){
+        //~ Serial.println("state = D");
+        state = D;
+      }else{
+        //~ Serial.println("state = SEND");
+        state = SEND;
+      }
+    }else{
+      //~ Serial.println("state = ERR");
+      state = ERR;
     }
-    Serial.println("Sync done");
-    Serial.print("other players movement: ");Serial.println(otherPlayerMov);
-    return otherPlayerMov;
+  }
+  Serial.println("Sync done");
+  Serial.print("other players movement: ");Serial.println(otherPlayerMov);
+  return otherPlayerMov;
 }
 
 //Main game function, runs the entire game
@@ -397,178 +388,174 @@ void snake(int* dotX, int* dotY){
   char oldDir, dirSrv, dirCli;
   bool srv;
   if(digitalRead(srvCliPin) == HIGH){ // read pin / determine srv or cli
-            Serial.println("pin HIGH Srv");
-            srv = true;
-        }else{
-            Serial.println("pin low cli");
-            srv = false;
-        }
-		dirCli = 'L';
-        dirSrv = 'R';
+    Serial.println("pin HIGH Srv");
+    srv = true;
+    oldDir = 'R';
+  }else{
+    Serial.println("pin low cli");
+    srv = false;
+    oldDir = 'L';
+  }
+  dirCli = 'L';
+  dirSrv = 'R';
   
   //Start snakes
   while(!collision(snakeCli,snakeSrv)&&!time(iTime)){
-        //Put snake code in here - That means moving snakes
-       
-      //Check for point dot function (prevents tie/player priority)
-      //In theory, dot touch is not needed since collision already checks for tie
-      bool dotTouch = false;
-      
-      if(srv){
-        //Server
-        if((snakeSrv->x[snakeSrv->head]==*dotX)&&(snakeSrv->y[snakeSrv->head]==*dotY)){
-            snakeSrv->delay = 'Y';
-            snakeSrv->length += 1;
-            dotTouch = true;
-        }
-      }else{
-        //Client
-        if((snakeCli->x[snakeCli->head]==*dotX)&&(snakeCli->y[snakeCli->head]==*dotY)){
-           snakeCli->delay = 'Y';
-           snakeCli->length += 1;
-           dotTouch = true;
+    //Put snake code in here - That means moving snakes
+    //Check for point dot function (prevents tie/player priority)
+    //In theory, dot touch is not needed since collision already checks for tie
+    bool dotTouch = false;
+    
+    if(srv){
+      //Server
+      if((snakeSrv->x[snakeSrv->head]==*dotX)&&(snakeSrv->y[snakeSrv->head]==*dotY)){
+        snakeSrv->delay = 'Y';
+        snakeSrv->length += 1;
+        dotTouch = true;
+      }
+    }else{
+      //Client
+      if((snakeCli->x[snakeCli->head]==*dotX)&&(snakeCli->y[snakeCli->head]==*dotY)){
+        snakeCli->delay = 'Y';
+        snakeCli->length += 1;
+        dotTouch = true;
+      }
+    }
+    
+    if(dotTouch){//Move dot to new location
+      pointDot(dotX,dotY);
+    }
+  
+    //Now that winLose conditions are complete, delay time
+    delay(500);
+  
+    //Read input, depends on whether is srv or cli
+    if(srv){
+      Serial.println("pin HIGH Srv");
+      dirSrv = readInput(oldDir);
+      //If delayed, send message with delay
+      if(snakeSrv->delay == 'Y'){
+        if(dirSrv=='U'){
+          dirSrv = 'V';
+        }else if(dirSrv=='D'){
+          dirSrv = 'B';
+        }else if(dirSrv=='L'){
+          dirSrv = 'N';
+        }else if(dirSrv=='R'){
+          dirSrv = 'M';
         }
       }
-      
-      if(dotTouch){//Move dot to new location
-          pointDot(dotX,dotY);
+      oldDir = dirSrv;
+      dirCli = syncSrv(dirSrv); // call appropriate functions
+    }else{
+      Serial.println("pin low cli");
+      dirCli = readInput(oldDir);
+      //If delayed, send message with delay
+      if(snakeCli->delay == 'Y'){
+        if(dirCli=='U'){
+          dirCli = 'V';
+        }else if(dirCli=='D'){
+          dirCli = 'B';
+        }else if(dirCli=='L'){
+          dirCli = 'N';
+        }else if(dirCli=='R'){
+          dirCli = 'M';
+        }
       }
-       
-       //Now that winLose conditions are complete, delay time
-       delay(500);
-       
-       //Read input, depends on whether is srv or cli
--	   if(srv){
--            Serial.println("pin HIGH Srv");
--            dirSrv = readInput(oldDir);
--			if(snakeSrv->delay=='Y'){
--				//If delayed, send message with delay
--				if(snakeSrv->delay = 'Y'){
--					if(dirSrv=='U'){
--						dirSrv = 'V';
--					}else if(dirSrv=='D'){
--						dirSrv = 'B';
--					}else if(dirSrv=='L'){
--						dirSrv = 'N';
--					}else if(dirSrv=='R'){
--						dirSrv = 'M';
--					}
--				}
--				oldDir == dirSrv;
--			}
--			//If not delayed,,don't send message with delay
--            dirCli = syncSrv(dirSrv); // call appropriate functions
--        }else{
--            Serial.println("pin low cli");
--            dirCli = readInput(oldDir);
--			if(snakeCli->delay=='Y'){
--				//If delayed, send message with delay
--				if(snakCliv->delay = 'Y'){
--					if(dirCli=='U'){
--						dirCli = 'V';
--					}else if(dirCli=='D'){
--						dirCli = 'B';
--					}else if(dirCli=='L'){
--						dirCli = 'N';
--					}else if(dirCli=='R'){
--						dirCli = 'M';
--					}
--				}
--				oldDir == dirCli;
--			}
--            dirSrv = syncCli(dirCli); // call appropriate functions
--        }
-       
-       //If haven't eaten dot, delete tail and undraw
-       //Client's Tail
-       if(snakeCli->delay == 'N'){
-            //Delete tail on display
-            tft.fillRect((snakeCli->x[snakeCli->tail]*3)+3,(snakeCli->y[snakeCli->tail]*3)+19,3,3,0x0000); //black
-            //Move tail by one
-            snakeCli->tail = (snakeCli->tail + 1)%50;
-       }else{
-            snakeCli->delay = 'N';
-       }
-       
-       //Server's Tail
-       if(snakeSrv->delay == 'N'){
-            //Delete tail on display
-            tft.fillRect((snakeSrv->x[snakeSrv->tail]*3)+3,(snakeSrv->y[snakeSrv->tail]*3)+19,3,3,0x0000); //black
-            //Move tail by one
-            snakeSrv->tail = (snakeSrv->tail + 1)%50;
-       }else{
-            snakeSrv->delay = 'N';
-       }
-       
-       //Move snake heads
-       
-       //Client
-       if(dirCli == 'U'){//Up
-            //Transfer coordinates to new head
-            snakeCli->y[(snakeCli->head+1)%50] = snakeCli->y[snakeCli->head] - 1;
-            snakeCli->x[(snakeCli->head+1)%50] = snakeCli->x[snakeCli->head];
-       }
-       if(dirCli == 'R'){//Right
-            //Transfer coordinates to new head
-            snakeCli->x[(snakeCli->head+1)%50] = snakeCli->x[snakeCli->head] + 1;
-            snakeCli->y[(snakeCli->head+1)%50] = snakeCli->y[snakeCli->head];
-       }
-       if(dirCli == 'D'){//Down
-            //Transfer coordinates to new head
-            snakeCli->y[(snakeCli->head+1)%50] = snakeCli->y[snakeCli->head] + 1;
-            snakeCli->x[(snakeCli->head+1)%50] = snakeCli->x[snakeCli->head];
-       }
-       if(dirCli == 'L'){//Left
-            //Transfer coordinates to new head
-            snakeCli->x[(snakeCli->head+1)%50] = snakeCli->x[snakeCli->head] - 1;
-            snakeCli->y[(snakeCli->head+1)%50] = snakeCli->y[snakeCli->head];
-       }
-       snakeCli->head = (snakeCli->head + 1)%50;
-       //Draw new client head
-       tft.fillRect((snakeCli->x[snakeCli->head]*3)+3,(snakeCli->y[snakeCli->head]*3)+19,3,3,0xFFFF); //0 = black
-       
-       //Server
-       if(dirSrv == 'U'){//Up
-            //Transfer coordinates to new head
-            snakeSrv->y[(snakeSrv->head+1)%50] = snakeSrv->y[snakeSrv->head] - 1;
-            snakeSrv->x[(snakeSrv->head+1)%50] = snakeSrv->x[snakeSrv->head];
-       }
-       if(dirSrv == 'R'){//Right
-            //Transfer coordinates to new head
-            snakeSrv->x[(snakeSrv->head+1)%50] = snakeSrv->x[snakeSrv->head] + 1;
-            snakeSrv->y[(snakeSrv->head+1)%50] = snakeSrv->y[snakeSrv->head];
-       }
-       if(dirSrv == 'D'){//Down
-            //Transfer coordinates to new head
-            snakeSrv->y[(snakeSrv->head+1)%50] = snakeSrv->y[snakeSrv->head] + 1;
-            snakeSrv->x[(snakeSrv->head+1)%50] = snakeSrv->x[snakeSrv->head];
-       }
-       if(dirSrv == 'L'){//Left
-            //Transfer coordinates to new head
-            snakeSrv->x[(snakeSrv->head+1)%50] = snakeSrv->x[snakeSrv->head] - 1;
-            snakeSrv->y[(snakeSrv->head+1)%50] = snakeSrv->y[snakeSrv->head];
-       }
-       snakeSrv->head = (snakeSrv->head + 1)%50;
-       //Draw new server head
-       tft.fillRect((snakeSrv->x[snakeSrv->head]*3)+3,(snakeSrv->y[snakeSrv->head]*3)+19,3,3,0xFFFF); //0 = black
-       
+      oldDir = dirCli;
+      dirSrv = syncCli(dirCli); // call appropriate functions
+    }
+      
+    //If haven't eaten dot, delete tail and undraw
+    //Client's Tail
+    if(snakeCli->delay == 'N'){
+      //Delete tail on display
+      tft.fillRect((snakeCli->x[snakeCli->tail]*3)+3,(snakeCli->y[snakeCli->tail]*3)+19,3,3,0x0000); //black
+      //Move tail by one
+      snakeCli->tail = (snakeCli->tail + 1)%50;
+    }else{
+      snakeCli->delay = 'N';
+    }
+    
+    //Server's Tail
+    if(snakeSrv->delay == 'N'){
+      //Delete tail on display
+      tft.fillRect((snakeSrv->x[snakeSrv->tail]*3)+3,(snakeSrv->y[snakeSrv->tail]*3)+19,3,3,0x0000); //black
+      //Move tail by one
+      snakeSrv->tail = (snakeSrv->tail + 1)%50;
+    }else{
+      snakeSrv->delay = 'N';
+    }
+    
+    //Move snake heads
+    
+    //Client
+    if(dirCli == 'U'){//Up
+      //Transfer coordinates to new head
+      snakeCli->y[(snakeCli->head+1)%50] = snakeCli->y[snakeCli->head] - 1;
+      snakeCli->x[(snakeCli->head+1)%50] = snakeCli->x[snakeCli->head];
+    }
+    if(dirCli == 'R'){//Right
+      //Transfer coordinates to new head
+      snakeCli->x[(snakeCli->head+1)%50] = snakeCli->x[snakeCli->head] + 1;
+      snakeCli->y[(snakeCli->head+1)%50] = snakeCli->y[snakeCli->head];
+    }
+    if(dirCli == 'D'){//Down
+    //Transfer coordinates to new head
+    snakeCli->y[(snakeCli->head+1)%50] = snakeCli->y[snakeCli->head] + 1;
+    snakeCli->x[(snakeCli->head+1)%50] = snakeCli->x[snakeCli->head];
+    }
+    if(dirCli == 'L'){//Left
+      //Transfer coordinates to new head
+      snakeCli->x[(snakeCli->head+1)%50] = snakeCli->x[snakeCli->head] - 1;
+      snakeCli->y[(snakeCli->head+1)%50] = snakeCli->y[snakeCli->head];
+    }
+    snakeCli->head = (snakeCli->head + 1)%50;
+    //Draw new client head
+    tft.fillRect((snakeCli->x[snakeCli->head]*3)+3,(snakeCli->y[snakeCli->head]*3)+19,3,3,0xFFFF); //0 = black
+    
+    //Server
+    if(dirSrv == 'U'){//Up
+      //Transfer coordinates to new head
+      snakeSrv->y[(snakeSrv->head+1)%50] = snakeSrv->y[snakeSrv->head] - 1;
+      snakeSrv->x[(snakeSrv->head+1)%50] = snakeSrv->x[snakeSrv->head];
+    }
+    if(dirSrv == 'R'){//Right
+      //Transfer coordinates to new head
+      snakeSrv->x[(snakeSrv->head+1)%50] = snakeSrv->x[snakeSrv->head] + 1;
+      snakeSrv->y[(snakeSrv->head+1)%50] = snakeSrv->y[snakeSrv->head];
+    }
+    if(dirSrv == 'D'){//Down
+      //Transfer coordinates to new head
+      snakeSrv->y[(snakeSrv->head+1)%50] = snakeSrv->y[snakeSrv->head] + 1;
+      snakeSrv->x[(snakeSrv->head+1)%50] = snakeSrv->x[snakeSrv->head];
+    }
+    if(dirSrv == 'L'){//Left
+      //Transfer coordinates to new head
+      snakeSrv->x[(snakeSrv->head+1)%50] = snakeSrv->x[snakeSrv->head] - 1;
+      snakeSrv->y[(snakeSrv->head+1)%50] = snakeSrv->y[snakeSrv->head];
+    }
+    snakeSrv->head = (snakeSrv->head + 1)%50;
+    //Draw new server head
+    tft.fillRect((snakeSrv->x[snakeSrv->head]*3)+3,(snakeSrv->y[snakeSrv->head]*3)+19,3,3,0xFFFF); //0 = black
   }
+  
   if(time(iTime)){
-	  //Timeout indicated
-		if(snakeCli->length > snakeSrv->length){
-            //Client's snake is longer, therefore client wins
-            Serial.println("Cli Win / Client snake is longer");
-            winLose(0);
-        }else if(snakeSrv->length > snakeCli->length){
-            //Server's snake is longer, therefore server wins
-            Serial.println("Srv Win / Server snake is longer");
-            winLose(1);
-        }else{
-            //Snake lengths are equal. Tie.
-            Serial.println("Tie / Snakes are of equal length");
-            winLose(2);
-        }
-	}
+    //Timeout indicated
+    if(snakeCli->length > snakeSrv->length){
+      //Client's snake is longer, therefore client wins
+      Serial.println("Cli Win / Client snake is longer");
+      winLose(0);
+    }else if(snakeSrv->length > snakeCli->length){
+      //Server's snake is longer, therefore server wins
+      Serial.println("Srv Win / Server snake is longer");
+      winLose(1);
+    }else{
+      //Snake lengths are equal. Tie.
+      Serial.println("Tie / Snakes are of equal length");
+      winLose(2);
+    }
+  }
 }
 
 //Startup()
@@ -579,7 +566,7 @@ void startUp(){
 	while(Serial3.available()>0){
 		char dump = Serial3.read();
 	}
-	
+	tft.fillScreen(0x0000);
   tft.setTextColor(0xFFFF, 0x0000);
   
   //Draw boundaries
@@ -664,13 +651,9 @@ void menuCli(){
   tft.setCursor(0,0);
   tft.print("client");
   tft.setCursor(50,72);
-  tft.println("Waiting");
-  //~ tft.setCursor(50,80);
+  tft.print("Waiting");
+  tft.setCursor(50,80);
   tft.print("For Host");
-  //~ bool start = false;
-  //~ while(!start){
-    //~ start = listen('S');
-  //~ }
   char dump = syncCli('S');
   Serial.println("Start heard");
   Serial.println("Call startup");
@@ -684,6 +667,7 @@ int main(){
   init();
   
   tft.initR(INITR_BLACKTAB);
+  tft.setRotation(2);
   
   Serial.begin(9600);
   Serial3.begin(9600);
@@ -696,6 +680,8 @@ int main(){
   digitalWrite(srvCliPin, LOW);
   pinMode(SEL, INPUT);
   digitalWrite(SEL, LOW);
+  assert(snakeCli != NULL);
+  assert(snakeSrv != NULL);
   
   if(digitalRead(srvCliPin) == HIGH){ // read pin / determine srv or cli
     Serial.println("pin HIGH Srv");
