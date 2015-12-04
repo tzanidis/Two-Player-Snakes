@@ -108,13 +108,11 @@ void pointDot(int* x, int* y){
 char readInput(char oldChar){
     int horizontal = analogRead(HORIZ); //0-1024, left to right
     int vertical = analogRead(VERT);//0-1024, up to down
-    int delta_horizontal = horizontal - init_horiz;
-    int delta_vertical = vertical - init_vert;
+    int delta_horizontal = horizontal - 512;
+    int delta_vertical = vertical - 512;
+    Serial.print("delta H: "); Serial.print(delta_horizontal);
+    Serial.print(" delta V: "); Serial.println(delta_vertical);
     //case 3: no input is entered
-    if((delta_horizontal == 0)&&(delta_vertical == 0)){
-		Serial.print("using oldchar, no input");
-        return oldChar;
-    }else
     //case 1: horizontal is larger than vertical or equal
     if(abs(delta_horizontal) >= abs(delta_vertical)){//Go horizontal
         //Left
@@ -311,8 +309,8 @@ char syncSrv(char mov){
       state = ERR;
     }
   }
-  Serial.println("Sync done");
-  Serial.print("other players movement: ");Serial.println(otherPlayerMov);
+  Serial.print("Sync done");
+  Serial.print("other players movement: ");Serial.print(otherPlayerMov);
   return otherPlayerMov;
 }
 
@@ -357,8 +355,8 @@ char syncCli(char mov){
       state = ERR;
     }
   }
-  Serial.println("Sync done");
-  Serial.print("other players movement: ");Serial.println(otherPlayerMov);
+  Serial.print("Sync done");
+  Serial.print("other players movement: ");Serial.print(otherPlayerMov);
   return otherPlayerMov;
 }
 
