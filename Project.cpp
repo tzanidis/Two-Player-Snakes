@@ -659,7 +659,7 @@ void menuCli(){
   tft.setCursor(0,0);
   tft.print("client");
   tft.setCursor(50,72);
-  tft.println("Waiting");
+  tft.print("Waiting");
   tft.setCursor(50,80);
   tft.print("For Host");
   char dump = syncCli('S');
