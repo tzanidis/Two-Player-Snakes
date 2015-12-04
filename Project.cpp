@@ -678,6 +678,7 @@ int main(){
   
   Serial.begin(9600);
   Serial3.begin(9600);
+  tft.setRotation(3);
   
   randomSeed(analogRead(3));
   
