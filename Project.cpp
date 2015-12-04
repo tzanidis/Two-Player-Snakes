@@ -22,8 +22,8 @@ int init_vert = analogRead(VERT);
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 
 typedef struct {//size is 50 by default
-  int x[50];
-  int y[50];
+  int x[200];
+  int y[200];
   int head;//4
   int tail;//0
   int length;//5
@@ -100,7 +100,7 @@ void pointDot(int* x, int* y){
   *x = randomDot();
   *y = randomDot();
   //draw dot
-  tft.fillCircle((*x*3)+4, (*y*3)+20, 1, 0xFFFF);
+  tft.fillCircle((*x*3)+5, (*y*3)+21, 1, 0xFFFF);
   //debug
   Serial.print("point generated at x: "); Serial.print(*x);Serial.print(" and y: ");Serial.println(*y);
  }
@@ -117,7 +117,7 @@ char readInput(char oldChar){
     if(abs(delta_horizontal) >= abs(delta_vertical)){//Go horizontal
         //Left
         if(delta_horizontal<-300){
-            if(oldChar == 'R'){
+            if(oldChar == 'R'){//|| oldChar == 'M'
 				Serial.print("using oldchar R, can't go backwards");
               return 'R';
             }
@@ -126,7 +126,7 @@ char readInput(char oldChar){
         }
         //Right
         else if(delta_horizontal > 300){
-            if(oldChar == 'L'){
+            if(oldChar == 'L'){//|| oldChar == 'N'
 				Serial.print("using oldchar L, can't go backwards");
               return 'L';
             }
@@ -141,7 +141,7 @@ char readInput(char oldChar){
     {//(delta_vertical > delta_horizontal) Go vertical
         //Up
         if(delta_vertical < -300){
-            if(oldChar == 'D'){
+            if(oldChar == 'D'){//||oldChar == 'B'
 				Serial.print("using oldchar D, can't go backwards");
               return 'D';
             }
@@ -150,7 +150,7 @@ char readInput(char oldChar){
         }
         //Down
         else if(delta_vertical > 300){
-          if(oldChar == 'U'){
+          if(oldChar == 'U'){//||oldChar == 'V'
 			  Serial.print("using oldchar U, can't go backwards");
               return 'U';
             }
@@ -224,7 +224,7 @@ bool collision(Snake* snakeCli, Snake* snakeSrv){
     &&snakeCli->y[tempHead]==snakeCli->y[tempTail]){ //Checks y
       //If both are true, then snake collision is true
       Serial.print("Client snake suicide "); Serial.print(snakeCli->x[snakeCli->head]); Serial.print(", y: "); Serial.println(snakeCli->y[snakeCli->head]);
-      winLose(0);
+      winLose(1);
       return true;
     }
     tempTail = (tempTail + 1)%50;
@@ -237,7 +237,7 @@ bool collision(Snake* snakeCli, Snake* snakeSrv){
     &&snakeSrv->y[tempHead]==snakeSrv->y[tempTail]){ //Checks y
       //If both are true, then snake collision is true
       Serial.print("Server snake suicide "); Serial.print(snakeSrv->x[snakeSrv->head]); Serial.print(", y: "); Serial.println(snakeSrv->y[snakeSrv->head]);
-      winLose(1);
+      winLose(0);
       return true;
     }
     tempTail = (tempTail + 1)%50;
@@ -467,47 +467,54 @@ void snake(int* dotX, int* dotY){
     if(dotTouch){//Move dot to new location
       pointDot(dotX,dotY);
     }else{//Redraw dot, just incase other snake has eaten it
-        tft.fillCircle(((*dotX)*3)+4, ((*dotY)*3)+20, 1, 0xFFFF);
+        tft.fillCircle(((*dotX)*3)+5, ((*dotY)*3)+21, 1, 0xFFFF);
     }
   
     //Now that winLose conditions are complete, delay time
-    delay(200);
+    delay(25);
+  
+  //~ if(oldDir = 'V'){
+	  //~ oldDir == 'U';
+  //~ }else if(oldDir = 'B'){
+	  //~ oldDir == 'D';
+  //~ }else if(oldDir = 'N'){
+	  //~ oldDir == 'L';
+  //~ }else if(oldDir = 'M'){
+	  //~ oldDir == 'R';
+  //~ }
   
     //Read input, depends on whether is srv or cli
     if(srv){
       Serial.println("pin HIGH Srv");
       dirSrv = readInput(oldDir);
-      //If delayed, send message with delay
-      if(snakeSrv->delay == 'Y'){
-        if(dirSrv=='U'){
-          dirSrv = 'V';
-        }else if(dirSrv=='D'){
-          dirSrv = 'B';
-        }else if(dirSrv=='L'){
-          dirSrv = 'N';
-        }else if(dirSrv=='R'){
-          dirSrv = 'M';
-        }
-      }
       oldDir = dirSrv;
-    //If not delayed,,don't send message with delay
-    dirCli = syncSrv(dirSrv); // call appropriate functions
+      if(snakeSrv->delay == 'Y'){
+		  if(dirSrv = 'U'){
+			  dirSrv = 'V';
+		  }else if(dirSrv = 'D'){
+			  dirSrv = 'B';
+		  }else if(dirSrv = 'L'){
+			  dirSrv = 'N';
+		  }else if(dirSrv = 'R'){
+			  dirSrv = 'M';
+		  }
+	  }
+		dirCli = syncSrv(dirSrv); // call appropriate functions
     }else{
       Serial.println("pin low cli");
       dirCli = readInput(oldDir);
-      //If delayed, send message with delay
-      if(snakeCli->delay == 'Y'){
-        if(dirCli=='U'){
-          dirCli = 'V';
-        }else if(dirCli=='D'){
-          dirCli = 'B';
-        }else if(dirCli=='L'){
-          dirCli = 'N';
-        }else if(dirCli=='R'){
-          dirCli = 'M';
-        }
-      }
       oldDir = dirCli;
+      if(snakeCli->delay == 'Y'){
+		  if(dirCli = 'U'){
+			  dirCli = 'V';
+		  }else if(dirCli = 'D'){
+			  dirCli = 'B';
+		  }else if(dirCli = 'L'){
+			  dirCli = 'N';
+		  }else if(dirCli = 'R'){
+			  dirCli = 'M';
+		  }
+	  }
       dirSrv = syncCli(dirCli); // call appropriate functions
     }
       
@@ -675,7 +682,7 @@ void menuSrv(){
   tft.setCursor(54,76);
   tft.print("START");
   while(true){ //when not pressed
-    if(digitalRead(SEL) == 1){
+    if(digitalRead(SEL) == 0){
       //debug
       Serial.println("Start pressed");
       char dump = syncSrv('S');
@@ -724,7 +731,7 @@ int main(){
   pinMode(srvCliPin, INPUT);
   digitalWrite(srvCliPin, LOW);
   pinMode(SEL, INPUT);
-  digitalWrite(SEL, LOW);
+  digitalWrite(SEL, HIGH);
   assert(snakeCli != NULL);
   assert(snakeSrv != NULL);
   
