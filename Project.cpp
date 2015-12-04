@@ -15,8 +15,8 @@ const int VERT = 0;  // analog input
 const int HORIZ = 1; // analog input
 const int SEL = 9;   // digital input 
 const int srvCliPin = 13; //srv/cli pin
-const int init_horiz = analogRead(HORIZ);
-const int init_vert = analogRead(VERT);
+int init_horiz = analogRead(HORIZ);
+int init_vert = analogRead(VERT);
 
 //Define the tft
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
@@ -100,7 +100,7 @@ void pointDot(int* x, int* y){
   *x = randomDot();
   *y = randomDot();
   //draw dot
-  tft.fillCircle((*x*3)+3, (*y*3)+19, 1, 0xFFFF);
+  tft.fillCircle((*x*3)+4, (*y*3)+20, 1, 0xFFFF);
   //debug
   Serial.print("point generated at x: "); Serial.print(*x);Serial.print(" and y: ");Serial.println(*y);
  }
@@ -195,8 +195,6 @@ void winLose(int val){
 
 
 bool collision(Snake* snakeCli, Snake* snakeSrv){
-//TODO: Collision on itself
-//IMPORTANT!!
   //Check for walls
   if((snakeCli->x[snakeCli->head]<0)
   ||(snakeCli->x[snakeCli->head]>39)
@@ -217,6 +215,34 @@ bool collision(Snake* snakeCli, Snake* snakeSrv){
     return true;
   }
    
+   //Check for collision on itself
+   //Client snake
+   int tempTail = snakeCli->tail;
+   int tempHead = snakeCli->head;
+   while(tempTail!=tempHead){
+    if(snakeCli->x[tempHead]==snakeCli->x[tempTail] //Checks x
+    &&snakeCli->y[tempHead]==snakeCli->y[tempTail]){ //Checks y
+      //If both are true, then snake collision is true
+      Serial.print("Client snake suicide "); Serial.print(snakeCli->x[snakeCli->head]); Serial.print(", y: "); Serial.println(snakeCli->y[snakeCli->head]);
+      winLose(0);
+      return true;
+    }
+    tempTail = (tempTail + 1)%50;
+  }
+   //Server snake
+   tempTail = snakeSrv->tail;
+   tempHead = snakeSrv->head;
+   while(tempTail!=tempHead){
+    if(snakeSrv->x[tempHead]==snakeSrv->x[tempTail] //Checks x
+    &&snakeSrv->y[tempHead]==snakeSrv->y[tempTail]){ //Checks y
+      //If both are true, then snake collision is true
+      Serial.print("Server snake suicide "); Serial.print(snakeSrv->x[snakeSrv->head]); Serial.print(", y: "); Serial.println(snakeSrv->y[snakeSrv->head]);
+      winLose(1);
+      return true;
+    }
+    tempTail = (tempTail + 1)%50;
+  }
+   
   //Check for collision with other snake
   //Snake heads collide
   if((snakeCli->x[snakeCli->head]==snakeSrv->x[snakeSrv->head])&&(snakeCli->y[snakeCli->head]==snakeSrv->y[snakeSrv->head])){
@@ -226,8 +252,8 @@ bool collision(Snake* snakeCli, Snake* snakeSrv){
   }
   
   //Snake client's head into other snake
-  int tempTail = snakeSrv->tail;
-  int tempHead = (snakeSrv->head+1)%50;
+  tempTail = snakeSrv->tail;
+  tempHead = (snakeSrv->head+1)%50;
   while(tempTail!=tempHead){
     if(snakeCli->x[snakeCli->head]==snakeSrv->x[tempTail] //Checks x
     &&snakeCli->y[snakeCli->head]==snakeSrv->y[tempTail]){ //Checks y
@@ -423,14 +449,14 @@ void snake(int* dotX, int* dotY){
     bool dotTouch = false;
     
     if(srv){
-      //Server
+      //Server can only eat own dot
       if((snakeSrv->x[snakeSrv->head]==*dotX)&&(snakeSrv->y[snakeSrv->head]==*dotY)){
         snakeSrv->delay = 'Y';
         snakeSrv->length += 1;
         dotTouch = true;
       }
     }else{
-      //Client
+      //Client can only eat own dot
       if((snakeCli->x[snakeCli->head]==*dotX)&&(snakeCli->y[snakeCli->head]==*dotY)){
         snakeCli->delay = 'Y';
         snakeCli->length += 1;
@@ -440,10 +466,12 @@ void snake(int* dotX, int* dotY){
     
     if(dotTouch){//Move dot to new location
       pointDot(dotX,dotY);
+    }else{//Redraw dot, just incase other snake has eaten it
+        tft.fillCircle(((*dotX)*3)+4, ((*dotY)*3)+20, 1, 0xFFFF);
     }
   
     //Now that winLose conditions are complete, delay time
-    delay(500);
+    delay(200);
   
     //Read input, depends on whether is srv or cli
     if(srv){
@@ -487,7 +515,7 @@ void snake(int* dotX, int* dotY){
     //Client's Tail
     if(snakeCli->delay == 'N'){
       //Delete tail on display
-      tft.fillRect((snakeCli->x[snakeCli->tail]*3)+3,(snakeCli->y[snakeCli->tail]*3)+19,3,3,0x0000); //black
+      tft.fillRect((snakeCli->x[snakeCli->tail]*3)+4,(snakeCli->y[snakeCli->tail]*3)+20,3,3,0x0000); //black
       //Move tail by one
       snakeCli->tail = (snakeCli->tail + 1)%50;
     }else{
@@ -497,7 +525,7 @@ void snake(int* dotX, int* dotY){
     //Server's Tail
     if(snakeSrv->delay == 'N'){
       //Delete tail on display
-      tft.fillRect((snakeSrv->x[snakeSrv->tail]*3)+3,(snakeSrv->y[snakeSrv->tail]*3)+19,3,3,0x0000); //black
+      tft.fillRect((snakeSrv->x[snakeSrv->tail]*3)+4,(snakeSrv->y[snakeSrv->tail]*3)+20,3,3,0x0000); //black
       //Move tail by one
       snakeSrv->tail = (snakeSrv->tail + 1)%50;
     }else{
@@ -507,54 +535,54 @@ void snake(int* dotX, int* dotY){
     //Move snake heads
     
     //Client
-    if(dirCli == 'U'){//Up
+    if((dirCli == 'U')||(dirCli == 'V')){//Up
       //Transfer coordinates to new head
       snakeCli->y[(snakeCli->head+1)%50] = snakeCli->y[snakeCli->head] - 1;
       snakeCli->x[(snakeCli->head+1)%50] = snakeCli->x[snakeCli->head];
     }
-    if(dirCli == 'R'){//Right
+    if((dirCli == 'R')||(dirCli == 'M')){//Right
       //Transfer coordinates to new head
       snakeCli->x[(snakeCli->head+1)%50] = snakeCli->x[snakeCli->head] + 1;
       snakeCli->y[(snakeCli->head+1)%50] = snakeCli->y[snakeCli->head];
     }
-    if(dirCli == 'D'){//Down
+    if((dirCli == 'D')||(dirCli == 'B')){//Down
     //Transfer coordinates to new head
     snakeCli->y[(snakeCli->head+1)%50] = snakeCli->y[snakeCli->head] + 1;
     snakeCli->x[(snakeCli->head+1)%50] = snakeCli->x[snakeCli->head];
     }
-    if(dirCli == 'L'){//Left
+    if((dirCli == 'L')||(dirCli == 'M')){//Left
       //Transfer coordinates to new head
       snakeCli->x[(snakeCli->head+1)%50] = snakeCli->x[snakeCli->head] - 1;
       snakeCli->y[(snakeCli->head+1)%50] = snakeCli->y[snakeCli->head];
     }
     snakeCli->head = (snakeCli->head + 1)%50;
     //Draw new client head
-    tft.fillRect((snakeCli->x[snakeCli->head]*3)+3,(snakeCli->y[snakeCli->head]*3)+19,3,3,0xFFFF); //0 = black
+    tft.fillRect((snakeCli->x[snakeCli->head]*3)+4,(snakeCli->y[snakeCli->head]*3)+20,3,3,0xFFFF); //0 = black
     
     //Server
-    if(dirSrv == 'U'){//Up
+    if((dirSrv == 'U')||(dirSrv == 'V')){//Up
       //Transfer coordinates to new head
       snakeSrv->y[(snakeSrv->head+1)%50] = snakeSrv->y[snakeSrv->head] - 1;
       snakeSrv->x[(snakeSrv->head+1)%50] = snakeSrv->x[snakeSrv->head];
     }
-    if(dirSrv == 'R'){//Right
+    if((dirSrv == 'R')||(dirSrv == 'M')){//Right
       //Transfer coordinates to new head
       snakeSrv->x[(snakeSrv->head+1)%50] = snakeSrv->x[snakeSrv->head] + 1;
       snakeSrv->y[(snakeSrv->head+1)%50] = snakeSrv->y[snakeSrv->head];
     }
-    if(dirSrv == 'D'){//Down
+    if((dirSrv == 'D')||(dirSrv == 'B')){//Down
       //Transfer coordinates to new head
       snakeSrv->y[(snakeSrv->head+1)%50] = snakeSrv->y[snakeSrv->head] + 1;
       snakeSrv->x[(snakeSrv->head+1)%50] = snakeSrv->x[snakeSrv->head];
     }
-    if(dirSrv == 'L'){//Left
+    if((dirSrv == 'L')||(dirSrv == 'N')){//Left
       //Transfer coordinates to new head
       snakeSrv->x[(snakeSrv->head+1)%50] = snakeSrv->x[snakeSrv->head] - 1;
       snakeSrv->y[(snakeSrv->head+1)%50] = snakeSrv->y[snakeSrv->head];
     }
     snakeSrv->head = (snakeSrv->head + 1)%50;
     //Draw new server head
-    tft.fillRect((snakeSrv->x[snakeSrv->head]*3)+3,(snakeSrv->y[snakeSrv->head]*3)+19,3,3,0xFFFF); //0 = black
+    tft.fillRect((snakeSrv->x[snakeSrv->head]*3)+4,(snakeSrv->y[snakeSrv->head]*3)+20,3,3,0xFFFF); //0 = black
   }
   
   if(time(iTime)){
@@ -699,6 +727,9 @@ int main(){
   digitalWrite(SEL, LOW);
   assert(snakeCli != NULL);
   assert(snakeSrv != NULL);
+  
+  init_horiz = analogRead(HORIZ);
+  init_vert = analogRead(VERT);
   
   if(digitalRead(srvCliPin) == HIGH){ // read pin / determine srv or cli
     Serial.println("pin HIGH Srv");
