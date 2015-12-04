@@ -100,58 +100,53 @@ void pointDot(int* x, int* y){
   *x = randomDot();
   *y = randomDot();
   //draw dot
-  tft.fillCircle((*x*3)+3, (*y*3)+19, 2, 0xFFFF);
+  tft.fillCircle((*x*3)+3, (*y*3)+19, 1, 0xFFFF);
   //debug
   Serial.print("point generated at x: "); Serial.print(*x);Serial.print(" and y: ");Serial.println(*y);
  }
 
 char readInput(char oldChar){
-    int horizontal = analogRead(HORIZ); //0-1024, left to right
-    int vertical = analogRead(VERT);//0-1024, up to down
-    int delta_horizontal = horizontal - init_horiz;
-    int delta_vertical = vertical - init_vert;
-    //case 3: no input is entered
-    if((delta_horizontal == 0)&&(delta_vertical == 0)){
-        return oldChar;
-    }else
+  int horizontal = analogRead(HORIZ); //0-1024, left to right
+  int vertical = analogRead(VERT);//0-1024, up to down
+  int delta_horizontal = horizontal - init_horiz;
+  int delta_vertical = vertical - init_vert;
+  //case 3: no input is entered
+  if((delta_horizontal == 0)&&(delta_vertical == 0)){
+    return oldChar;
+  }else if(abs(delta_horizontal) >= abs(delta_vertical)){//Go horizontal
     //case 1: horizontal is larger than vertical or equal
-    if(abs(delta_horizontal) >= abs(delta_vertical)){//Go horizontal
-        //Left
-        if(delta_horizontal<-300){
-            if(oldChar == 'R'){
-              return 'R';
-            }
-            return 'L';
-        }
-        //Right
-        else if(delta_horizontal > 300){
-            if(oldChar == 'L'){
-              return 'L';
-            }
-            return 'R';
-        }else{
-			return oldChar;
-		}
-    }else
-    //case 2: vertical is larger than horizontal
-    {//(delta_vertical > delta_horizontal) Go vertical
-        //Up
-        if(delta_vertical < -300){
-            if(oldChar == 'D'){
-              return 'D';
-            }
-            return 'U';
-        }
-        //Down
-        else if(delta_vertical > 300){
-          if(oldChar == 'U'){
-              return 'U';
-            }
-            return 'D';
-        }else{
-			return oldChar;
-		}
+    //Left
+    if(delta_horizontal<-300){
+      if(oldChar == 'R'){
+        return 'R';
+      }
+      return 'L';
+    }else if(delta_horizontal > 300){//Right
+      if(oldChar == 'L'){
+        return 'L';
+      }
+      return 'R';
+    }else{
+      return oldChar;
     }
+  }else{
+    //case 2: vertical is larger than horizontal
+    //(delta_vertical > delta_horizontal) Go vertical
+    //Up
+    if(delta_vertical < -300){
+      if(oldChar == 'D'){
+        return 'D';
+      }
+      return 'U';
+    }else if(delta_vertical > 300){//Down
+      if(oldChar == 'U'){
+        return 'U';
+      }
+      return 'D';
+    }else{
+      return oldChar;
+    }
+  }
 }
 
 //Winlose is called inside collision(), or after time() returns true 
@@ -271,32 +266,32 @@ char syncSrv(char mov){
   while((state != STD) && (state !=ERR)){
     if(state == SEND){
       sendChar(mov);
-      Serial.println("state = WFR");
+      //~ Serial.println("state = WFR");
       state = WFR;
     }else if(state == WFR){
       comp = listenDir();
       if(comp=='A' || comp=='S'){
-        Serial.println("state = LIS");
+        //~ Serial.println("state = LIS");
         state = LIS;
       }else{
-        Serial.println("state = SEND");
+        //~ Serial.println("state = SEND");
         state = SEND;
       }
     }else if(state == LIS){
       otherPlayerMov = listenDir();
         if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R' || otherPlayerMov == 'S'){
-          Serial.println("state = STD");
+          //~ Serial.println("state = STD");
           sendChar('A');
           state = STD;
         }else if(otherPlayerMov == 'V' || otherPlayerMov == 'B' ||otherPlayerMov == 'N' ||otherPlayerMov == 'M'){
-          Serial.println("state = STD + len");
+          //~ Serial.println("state = STD + len");
           sendChar('A');
           snakeCli->length +=1;
           snakeCli->delay = 'Y';
           state = STD;
         }
     }else{
-      Serial.println("state = ERR");
+      //~ Serial.println("state = ERR");
       state = ERR;
     }
   }
@@ -316,13 +311,13 @@ char syncCli(char mov){
   while((state != D) && (state !=ERR)){
     if(state == LIS){
       otherPlayerMov = listenDir();
-      Serial.println("im here?");
+      //~ Serial.println("im here?");
       if(otherPlayerMov == 'U' || otherPlayerMov == 'D' ||otherPlayerMov == 'L' ||otherPlayerMov == 'R' || otherPlayerMov == 'S'){
-        Serial.println("state = SEND");
+        //~ Serial.println("state = SEND");
         sendChar('A');
         state = SEND;
       }else if(otherPlayerMov == 'V' || otherPlayerMov == 'B' ||otherPlayerMov == 'N' ||otherPlayerMov == 'M'){
-        Serial.println("state = STD + len");
+        //~ Serial.println("state = STD + len");
         sendChar('A');
         snakeSrv->length +=1;
         snakeSrv->delay = 'Y';
@@ -330,19 +325,19 @@ char syncCli(char mov){
       }
     }else if(state == SEND){
       sendChar(mov);
-      Serial.println("state = WFR");
+      //~ Serial.println("state = WFR");
       state = WFR;
     }else if(state == WFR){
       comp = listenDir();
       if(comp=='A' || comp=='S'){
-        Serial.println("state = D");
+        //~ Serial.println("state = D");
         state = D;
       }else{
-        Serial.println("state = SEND");
+        //~ Serial.println("state = SEND");
         state = SEND;
       }
     }else{
-      Serial.println("state = ERR");
+      //~ Serial.println("state = ERR");
       state = ERR;
     }
   }
@@ -453,8 +448,7 @@ void snake(int* dotX, int* dotY){
         }
       }
       oldDir = dirSrv;
-    //If not delayed,,don't send message with delay
-    dirCli = syncSrv(dirSrv); // call appropriate functions
+      dirCli = syncSrv(dirSrv); // call appropriate functions
     }else{
       Serial.println("pin low cli");
       dirCli = readInput(oldDir);
@@ -675,10 +669,10 @@ int main(){
   init();
   
   tft.initR(INITR_BLACKTAB);
+  tft.setRotation(2);
   
   Serial.begin(9600);
   Serial3.begin(9600);
-  tft.setRotation(2);
   
   randomSeed(analogRead(3));
   
