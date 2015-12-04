@@ -106,63 +106,45 @@ void pointDot(int* x, int* y){
  }
 
 char readInput(char oldChar){
-    int horizontal = analogRead(HORIZ); //0-1024, left to right
-    int vertical = analogRead(VERT);//0-1024, up to down
-    int delta_horizontal = horizontal - init_horiz;
-    int delta_vertical = vertical - init_vert;
-    //case 3: no input is entered
-    if((delta_horizontal == 0)&&(delta_vertical == 0)){
-		Serial.print("using oldchar, no input");
-        return oldChar;
-    }else
+  int horizontal = analogRead(HORIZ); //0-1024, left to right
+  int vertical = analogRead(VERT);//0-1024, up to down
+  int delta_horizontal = horizontal - init_horiz;
+  int delta_vertical = vertical - init_vert;
+  //case 3: no input is entered
+  if(abs(delta_horizontal) >= abs(delta_vertical)){//Go horizontal
     //case 1: horizontal is larger than vertical or equal
-    if(abs(delta_horizontal) >= abs(delta_vertical)){//Go horizontal
-        //Left
-        if(delta_horizontal<-300){
-            if(oldChar == 'R'){
-				Serial.print("using oldchar R, can't go backwards");
-              return 'R';
-            }
-            Serial.print("using new char, L");
-            return 'L';
-        }
-        //Right
-        else if(delta_horizontal > 300){
-            if(oldChar == 'L'){
-				Serial.print("using oldchar L, can't go backwards");
-              return 'L';
-            }
-            Serial.print("using new char, R");
-            return 'R';
-        }else{
-			Serial.print("using old char, no input entered/deadzone");
-			return oldChar;
-		}
-    }else
-    //case 2: vertical is larger than horizontal
-    {//(delta_vertical > delta_horizontal) Go vertical
-        //Up
-        if(delta_vertical < -300){
-            if(oldChar == 'D'){
-				Serial.print("using oldchar D, can't go backwards");
-              return 'D';
-            }
-            Serial.print("using new char, U");
-            return 'U';
-        }
-        //Down
-        else if(delta_vertical > 300){
-          if(oldChar == 'U'){
-			  Serial.print("using oldchar U, can't go backwards");
-              return 'U';
-            }
-            Serial.print("using newchar D");
-            return 'D';
-        }else{
-			Serial.print("using oldchar, no input/deadzone");
-			return oldChar;
-		}
+    //Left
+    if(delta_horizontal<-300){
+      if(oldChar == 'R'){
+        return 'R';
+      }
+      return 'L';
+    }else if(delta_horizontal > 300){//Right
+      if(oldChar == 'L'){
+        return 'L';
+      }
+      return 'R';
+    }else{
+      return oldChar;
     }
+  }else{
+    //case 2: vertical is larger than horizontal
+    //(delta_vertical > delta_horizontal) Go vertical
+    //Up
+    if(delta_vertical < -300){
+      if(oldChar == 'U'){
+        return 'U';
+      }
+      return 'D';
+    }else if(delta_vertical > 300){//Down
+      if(oldChar == 'D'){
+        return 'D';
+      }
+      return 'U';
+    }else{
+      return oldChar;
+    }
+  }
 }
 
 //Winlose is called inside collision(), or after time() returns true 
@@ -464,8 +446,7 @@ void snake(int* dotX, int* dotY){
         }
       }
       oldDir = dirSrv;
-    //If not delayed,,don't send message with delay
-    dirCli = syncSrv(dirSrv); // call appropriate functions
+      dirCli = syncSrv(dirSrv); // call appropriate functions
     }else{
       Serial.println("pin low cli");
       dirCli = readInput(oldDir);
@@ -707,7 +688,7 @@ int main(){
     menuSrv(); // call appropriate functions
   }else{
     Serial.println("pin low cli");
-    menuCli(); // call a*ppropriate functions
+    menuCli(); // call appropriate functions
   }
   
   Serial3.end();
