@@ -473,29 +473,19 @@ void snake(int* dotX, int* dotY){
     //Now that winLose conditions are complete, delay time
     delay(25);
   
-  //~ if(oldDir = 'V'){
-	  //~ oldDir == 'U';
-  //~ }else if(oldDir = 'B'){
-	  //~ oldDir == 'D';
-  //~ }else if(oldDir = 'N'){
-	  //~ oldDir == 'L';
-  //~ }else if(oldDir = 'M'){
-	  //~ oldDir == 'R';
-  //~ }
-  
     //Read input, depends on whether is srv or cli
     if(srv){
       Serial.println("pin HIGH Srv");
       dirSrv = readInput(oldDir);
       oldDir = dirSrv;
       if(snakeSrv->delay == 'Y'){
-		  if(dirSrv = 'U'){
+		  if(dirSrv == 'U'){
 			  dirSrv = 'V';
-		  }else if(dirSrv = 'D'){
+		  }else if(dirSrv == 'D'){
 			  dirSrv = 'B';
-		  }else if(dirSrv = 'L'){
+		  }else if(dirSrv == 'L'){
 			  dirSrv = 'N';
-		  }else if(dirSrv = 'R'){
+		  }else if(dirSrv =='R'){
 			  dirSrv = 'M';
 		  }
 	  }
@@ -505,13 +495,13 @@ void snake(int* dotX, int* dotY){
       dirCli = readInput(oldDir);
       oldDir = dirCli;
       if(snakeCli->delay == 'Y'){
-		  if(dirCli = 'U'){
+		  if(dirCli == 'U'){
 			  dirCli = 'V';
-		  }else if(dirCli = 'D'){
+		  }else if(dirCli == 'D'){
 			  dirCli = 'B';
-		  }else if(dirCli = 'L'){
+		  }else if(dirCli == 'L'){
 			  dirCli = 'N';
-		  }else if(dirCli = 'R'){
+		  }else if(dirCli == 'R'){
 			  dirCli = 'M';
 		  }
 	  }
