@@ -22,8 +22,8 @@ int init_vert = analogRead(VERT);
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 
 typedef struct {//size is 50 by default
-  int x[200];
-  int y[200];
+  int x[50];
+  int y[50];
   int head;//4
   int tail;//0
   int length;//5
@@ -547,7 +547,7 @@ void snake(int* dotX, int* dotY){
     snakeCli->y[(snakeCli->head+1)%50] = snakeCli->y[snakeCli->head] + 1;
     snakeCli->x[(snakeCli->head+1)%50] = snakeCli->x[snakeCli->head];
     }
-    if((dirCli == 'L')||(dirCli == 'M')){//Left
+    if((dirCli == 'L')||(dirCli == 'N')){//Left
       //Transfer coordinates to new head
       snakeCli->x[(snakeCli->head+1)%50] = snakeCli->x[snakeCli->head] - 1;
       snakeCli->y[(snakeCli->head+1)%50] = snakeCli->y[snakeCli->head];
