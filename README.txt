@@ -41,6 +41,8 @@ Arduino(1) Digital port 13 <--> Resistor <--> Arduino(1) 5.0V Port
 (The following applies to only arduino 2, the client.)
 Arduino(2) Digital port 13 <--> Resistor <--> Arduino(2) GND
 
+Photo of wiring can be seen in the zip as .png
+
 **Wiring Instructions End**
 
 Coding instructions:
@@ -48,3 +50,10 @@ Run makefile, upload into arduino, then enter command "serial-mon" into console.
 
 Potential bugs (and their bugfixes):
 Sometimes game will end off of a random collision in the beginning, just reset arduino and try again if this happens.
+
+Functions/Milestones reached:
+Drawn movable snakes, randomly placed points are added.
+Collision with walls, other snakes, and itself and timeouts as victory conditions are added.
+Menu displaying vital information, game informs the player to 'reset' the arduino are added.
+Winner/Loser screen and handshake between two arduinos added.
+Adjustable game speed is incomplete, but thus makes program more stable.
