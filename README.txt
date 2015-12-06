@@ -41,7 +41,8 @@ Arduino(1) Digital port 13 <--> Resistor <--> Arduino(1) 5.0V Port
 (The following applies to only arduino 2, the client.)
 Arduino(2) Digital port 13 <--> Resistor <--> Arduino(2) GND
 
-Photo of wiring can be seen in the zip as .png
+Photo of wiring can be seen in DSC_0013.JPG
+Important note: Photo doesn't show wiring between two arduinos. This is necessary to complete the arduino wiring.
 
 **Wiring Instructions End**
 
