@@ -6,10 +6,9 @@ Section: LBL A2 (60696)
 Copied code includes code taught in class such as the function WaitOnSerial3(), and arduino library.
 
 Accessories:
-* 1 Arduino Mega Board (AMG)
-* 1 TFT LCD Screen from Adafruit
-* 1 Sparkfun Thumb Joystick
-* 1 Potentiometer
+* 2 Arduino Mega Board (AMG)
+* 2 TFT LCD Screen from Adafruit
+* 2 Sparkfun Thumb Joystick
 
 Wiring Instructions:
 (The following applies to both Arduino 1 and Arduino 2. Arduino 1 is host, Arduino 2 is client.)
@@ -32,11 +31,15 @@ HOR <--> Pin A1
 SEL <--> Pin 9
 GND <--> BB GND bus
 
-(The following applies to only arduino 1, the host.)
+For serial pins: (1) is host, (2) is client
+Arduino(1) TX3 Communication Pin (14) <--> Arduino(2) RX3 Communication Pin (15)
+Arduino(2) TX3 Communication Pin (14) <--> Arduino(1) RX3 Communication Pin (15)
 
+(The following applies to only arduino 1, the host.)
+Arduino(1) Digital port 13 <--> Resistor <--> Arduino(1) 5.0V Port
 
 (The following applies to only arduino 2, the client.)
-
+Arduino(2) Digital port 13 <--> Resistor <--> Arduino(2) GND
 
 **Wiring Instructions End**
 
