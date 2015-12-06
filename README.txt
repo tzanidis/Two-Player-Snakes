@@ -37,6 +37,3 @@ Run makefile, upload into arduino, then enter command "serial-mon" into console.
 Potential bugs (and their bugfixes):
 If it keeps switching between map and menu, replace if(!select) with if(select) for both modes.
 If the SD card spews random big numbers, try replugging SD card or tossing around with the menu options.
-
-Additional notes:
-For some reason, the program seems to work better with many serial monitor commands. You may still delete them as you wish to unclutter the console.
