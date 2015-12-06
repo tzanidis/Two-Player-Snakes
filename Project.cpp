@@ -1,4 +1,4 @@
-//#includes up here bro
+//#includes up here - libraries
 #include <Arduino.h>
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7735.h> // Hardware-specific library
@@ -15,27 +15,32 @@ const int VERT = 0;  // analog input
 const int HORIZ = 1; // analog input
 const int SEL = 9;   // digital input 
 const int srvCliPin = 13; //srv/cli pin
-int init_horiz = analogRead(HORIZ);
-int init_vert = analogRead(VERT);
+
+//Initialize init_horiz and init_vert as global variables
+int init_horiz;
+int init_vert;
 
 //Define the tft
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 
 typedef struct {//size is 50 by default
-  int x[50];
-  int y[50];
-  int head;//4
-  int tail;//0
-  int length;//5
+  int x[50]; //Holds snake x coordinates
+  int y[50]; //Holds snake y coordinates
+  int head;//4 //Holds snake's head position in array
+  int tail;//0 //Holds snake's tail position in array
+  int length;//5 //Length of snake, used just incase timeout is reached
   char delay; // 'Y' For eating the point dot, Y is yes, N is no
 }Snake;
 
-//Create snakes - 2d array
-//call with snakeCli[i][j]
+//Create snakes - global variables
+//assert() is called later in main() to make sure arduino has enough space
 Snake* snakeCli = (Snake*) malloc(sizeof(Snake));
 Snake* snakeSrv = (Snake*) malloc(sizeof(Snake));
 
+//sendChar(c)
+//sends a character indicated by argument msg to other arduino
 void sendChar(char msg){
+//Character naming conventions for state machine (syncCli() and syncSrv())
   //Start = S
   //Sync = A
   //Up = U
@@ -49,9 +54,13 @@ void sendChar(char msg){
   
   Serial3.write(msg);
   //debug
-  Serial.print("msg sent: "); Serial.println(msg);
+  //Serial.print("msg sent: "); Serial.println(msg);
 }//Done
 
+//waitOnSerial3()
+//waits for nbytes bytes to show up in Serial3.available
+//if timesout, returns false
+//used to sync state machines
 bool waitOnSerial3(uint8_t nbytes, long timeout){
   unsigned long deadline = millis() + timeout;
   while((Serial3.available() < nbytes) && (timeout < 0 || millis() < deadline)){
@@ -60,6 +69,8 @@ bool waitOnSerial3(uint8_t nbytes, long timeout){
   return Serial3.available() >= nbytes;
 }//Done
 
+//listen()
+//listens for an indicated character and returns true if found in 'listen buffer'
 bool listen(char c){
   if(waitOnSerial3(1,1000)){
     char msg = Serial3.read();
@@ -72,7 +83,9 @@ bool listen(char c){
   return false;
 }//Done
 
-char listenDir(){
+//listenDir()
+//listens for a character, if null then returns 'Z'
+  char listenDir(){
   char msg = 'Z';
   if(waitOnSerial3(1,1000)){
     msg = Serial3.read();
@@ -105,14 +118,19 @@ void pointDot(int* x, int* y){
   Serial.print("point generated at x: "); Serial.print(*x);Serial.print(" and y: ");Serial.println(*y);
  }
 
+//readInput()
+//reads joystick input and returns corresponding character of input
+//coordinated with snake(), joystick can't return a character indicating that the snake is turning more than 90 degrees.
 char readInput(char oldChar){
     int horizontal = analogRead(HORIZ); //0-1024, left to right
     int vertical = analogRead(VERT);//0-1024, up to down
-    int delta_horizontal = horizontal - 512;
-    int delta_vertical = vertical - 512;
+    int delta_horizontal = horizontal - 512; //512 is init_horizontal
+    int delta_vertical = vertical - 512; //512 is init_vertical
     Serial.print("delta H: "); Serial.print(delta_horizontal);
     Serial.print(" delta V: "); Serial.println(delta_vertical);
-    //case 3: no input is entered
+    
+    //Serial.println explains features, can be removed since it's debugs but kept for convenience
+    
     //case 1: horizontal is larger than vertical or equal
     if(abs(delta_horizontal) >= abs(delta_vertical)){//Go horizontal
         //Left
@@ -133,6 +151,7 @@ char readInput(char oldChar){
             Serial.print("using new char, R");
             return 'R';
         }else{
+        	//case 3: no input is entered
 			Serial.print("using old char, no input entered/deadzone");
 			return oldChar;
 		}
@@ -157,6 +176,7 @@ char readInput(char oldChar){
             Serial.print("using newchar D");
             return 'D';
         }else{
+        		//case 3: no input is entered
 			Serial.print("using oldchar, no input/deadzone");
 			return oldChar;
 		}
@@ -165,6 +185,7 @@ char readInput(char oldChar){
 
 //Winlose is called inside collision(), or after time() returns true 
 //val decides winner: 0 is server, 1 is client, 2 is tie
+//draws a victory screen depending on outcome
 void winLose(int val){
   tft.fillScreen(0x0000);
   if(val == 1){//srv win
@@ -193,7 +214,9 @@ void winLose(int val){
   Serial.println("Draw Screen, tell to reset.");
 }//Done
 
-
+//collision()
+//checks every movement if there has been a collision between snakes or on the wall
+//takes addresses of snakeCli and snakeSrv as arguments
 bool collision(Snake* snakeCli, Snake* snakeSrv){
   //Check for walls
   if((snakeCli->x[snakeCli->head]<0)
@@ -219,7 +242,7 @@ bool collision(Snake* snakeCli, Snake* snakeSrv){
    //Client snake
    int tempTail = snakeCli->tail;
    int tempHead = snakeCli->head;
-   while(tempTail!=tempHead){
+   while(tempTail!=tempHead){//compares head coordinates with other body coordinates
     if(snakeCli->x[tempHead]==snakeCli->x[tempTail] //Checks x
     &&snakeCli->y[tempHead]==snakeCli->y[tempTail]){ //Checks y
       //If both are true, then snake collision is true
@@ -232,7 +255,7 @@ bool collision(Snake* snakeCli, Snake* snakeSrv){
    //Server snake
    tempTail = snakeSrv->tail;
    tempHead = snakeSrv->head;
-   while(tempTail!=tempHead){
+   while(tempTail!=tempHead){//compares head coordinates with other body coordinates
     if(snakeSrv->x[tempHead]==snakeSrv->x[tempTail] //Checks x
     &&snakeSrv->y[tempHead]==snakeSrv->y[tempTail]){ //Checks y
       //If both are true, then snake collision is true
@@ -254,7 +277,7 @@ bool collision(Snake* snakeCli, Snake* snakeSrv){
   //Snake client's head into other snake
   tempTail = snakeSrv->tail;
   tempHead = (snakeSrv->head+1)%50;
-  while(tempTail!=tempHead){
+  while(tempTail!=tempHead){//compares snakeCli head coordinates with snakeSrv body coordinates, doesn't end until body part from tail to head is checked
     if(snakeCli->x[snakeCli->head]==snakeSrv->x[tempTail] //Checks x
     &&snakeCli->y[snakeCli->head]==snakeSrv->y[tempTail]){ //Checks y
       //If both are true, then snake collision is true
@@ -268,7 +291,7 @@ bool collision(Snake* snakeCli, Snake* snakeSrv){
   //Snake server's head into other snake
   tempTail = snakeCli->tail;
   tempHead = (snakeCli->head+1)%50;
-  while(tempTail!=tempHead){
+  while(tempTail!=tempHead){//compares snakeSrv head coordinates with snakeCli body coordinates, doesn't end until body part from tail to head is checked
     if((snakeSrv->x[snakeSrv->head]==snakeCli->x[tempTail]) //Checks x
     &&(snakeSrv->y[snakeSrv->head]==snakeCli->y[tempTail])){ //Checks y
       //If both are true, then snake collision is true
@@ -279,12 +302,12 @@ bool collision(Snake* snakeCli, Snake* snakeSrv){
     tempTail = (tempTail + 1)%50;
   }
   
-  //No collision
+  //If no collision check has returned true yet, then there's no collision
   return false;
 }
 
-//Bool time FeelsBadMan
-//Returns true if time is up, otherwise return false
+//Bool time
+//Returns true if timeout of 1 minute 30 seconds is reached, otherwise return false
 bool time(int iTime){
   //int tempTime = millis();
   if((millis()-iTime)>90000){ //Constant timeout of 1 minute and 30 seconds
@@ -386,7 +409,10 @@ char syncCli(char mov){
   return otherPlayerMov;
 }
 
+//snake()
 //Main game function, runs the entire game
+//calls sync functions, collision function, time function every while loop
+//makes sure snake movement is synced and correct
 void snake(int* dotX, int* dotY){
   
   //Initialize snakes
@@ -427,14 +453,15 @@ void snake(int* dotX, int* dotY){
   
   int iTime = millis(); //Initial time
   
+  //Inititialize general directions to be used in while loop
   char oldDir, dirSrv, dirCli;
-  bool srv;
+  bool srv; //variable for reading server or client
   if(digitalRead(srvCliPin) == HIGH){ // read pin / determine srv or cli
     Serial.println("pin HIGH Srv");
     srv = true;
     oldDir = 'R';
   }else{
-    Serial.println("pin low cli");
+    Serial.println("pin low Cli");
     srv = false;
     oldDir = 'L';
   }
@@ -442,10 +469,9 @@ void snake(int* dotX, int* dotY){
   dirSrv = 'R';
   
   //Start snakes
+  //Check if snakes have collided with anything after every movement, and check for timeout
   while(!collision(snakeCli,snakeSrv)&&!time(iTime)){
-    //Put snake code in here - That means moving snakes
-    //Check for point dot function (prevents tie/player priority)
-    //In theory, dot touch is not needed since collision already checks for tie
+    //Check for if one of the snakes has touched its own dot
     bool dotTouch = false;
     
     if(srv){
@@ -464,44 +490,48 @@ void snake(int* dotX, int* dotY){
       }
     }
     
-    if(dotTouch){//Move dot to new location
+    if(dotTouch){//Move dot to new location if dot has been touched
       pointDot(dotX,dotY);
-    }else{//Redraw dot, just incase other snake has eaten it
+    }else{//Redraw dot incase other snake has 'hidden' it
         tft.fillCircle(((*dotX)*3)+5, ((*dotY)*3)+21, 1, 0xFFFF);
     }
   
-    //Now that winLose conditions are complete, delay time
+    //Now that winLose conditions are complete, delay time by potentiometer
     delay(25);
   
     //Read input, depends on whether is srv or cli
     if(srv){
-      Serial.println("pin HIGH Srv");
+      //Server
+      //Read joystick input and update old direction
       dirSrv = readInput(oldDir);
       oldDir = dirSrv;
+      //If there is delay, change character to 'delay' character so other arduino acknowledges the delay
       if(snakeSrv->delay == 'Y'){
-		  if(dirSrv == 'U'){
+		  if(dirSrv == 'U'){//Up
 			  dirSrv = 'V';
-		  }else if(dirSrv == 'D'){
+		  }else if(dirSrv == 'D'){//Down
 			  dirSrv = 'B';
-		  }else if(dirSrv == 'L'){
+		  }else if(dirSrv == 'L'){//Left
 			  dirSrv = 'N';
-		  }else if(dirSrv =='R'){
+		  }else if(dirSrv =='R'){//Right
 			  dirSrv = 'M';
 		  }
 	  }
 		dirCli = syncSrv(dirSrv); // call appropriate functions
     }else{
-      Serial.println("pin low cli");
+      //Client
+      //Read joystick input and update old direction
       dirCli = readInput(oldDir);
       oldDir = dirCli;
+      //If there is delay, change character to 'delay' character so other arduino acknowledges the delay
       if(snakeCli->delay == 'Y'){
-		  if(dirCli == 'U'){
+		  if(dirCli == 'U'){//Up
 			  dirCli = 'V';
-		  }else if(dirCli == 'D'){
+		  }else if(dirCli == 'D'){//Down
 			  dirCli = 'B';
-		  }else if(dirCli == 'L'){
+		  }else if(dirCli == 'L'){//Left
 			  dirCli = 'N';
-		  }else if(dirCli == 'R'){
+		  }else if(dirCli == 'R'){//Right
 			  dirCli = 'M';
 		  }
 	  }
@@ -516,6 +546,7 @@ void snake(int* dotX, int* dotY){
       //Move tail by one
       snakeCli->tail = (snakeCli->tail + 1)%50;
     }else{
+    	//If there is delay, leave tail there but change delay variable back to 'N';
       snakeCli->delay = 'N';
     }
     
@@ -526,11 +557,11 @@ void snake(int* dotX, int* dotY){
       //Move tail by one
       snakeSrv->tail = (snakeSrv->tail + 1)%50;
     }else{
+    	//If there is delay, leave tail there but change delay variable back to 'N';
       snakeSrv->delay = 'N';
     }
     
-    //Move snake heads
-    
+    //Move snake head
     //Client
     if((dirCli == 'U')||(dirCli == 'V')){//Up
       //Transfer coordinates to new head
@@ -661,7 +692,8 @@ void startUp(){
 }//Done
 
 //Menu for server
-//Change in text from menuCli
+//Draws menu text for server arduino
+//Waits for server to activate select of joystick
 void menuSrv(){
   //debug
   Serial.println("Draw menu for srv");
@@ -673,6 +705,7 @@ void menuSrv(){
   tft.print("START");
   while(true){ //when not pressed
     if(digitalRead(SEL) == 0){
+    	//Button is pressed, call startUp()
       //debug
       Serial.println("Start pressed");
       char dump = syncSrv('S');
@@ -686,7 +719,7 @@ void menuSrv(){
 }//Done
 
 //Menu for client
-//Change in text from menuSrv
+//Draws menu text for client arduino
 void menuCli(){
   tft.fillScreen(0x0000);
   tft.setTextColor(0xFFFF, 0x0000);
@@ -704,13 +737,15 @@ void menuCli(){
 
 //Function to start 
 int main(){
-  //stuff go here
   
+  //Initialize arduino functions
   init();
   
+  //Initialize screen
   tft.initR(INITR_BLACKTAB);
   tft.setRotation(2);
   
+  //Initialize arduino
   Serial.begin(9600);
   Serial3.begin(9600);
   
@@ -722,9 +757,12 @@ int main(){
   digitalWrite(srvCliPin, LOW);
   pinMode(SEL, INPUT);
   digitalWrite(SEL, HIGH);
+  
+  //Makes sure there is enough memory for snakeCli and snakeSrv
   assert(snakeCli != NULL);
   assert(snakeSrv != NULL);
   
+  //Initialize init_horiz and init_vert values
   init_horiz = analogRead(HORIZ);
   init_vert = analogRead(VERT);
   
