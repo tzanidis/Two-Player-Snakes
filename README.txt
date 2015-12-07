@@ -1,6 +1,6 @@
 README
 
-Name: Chris Tzanidis Henry Lo
+Name: Chris Tzanidis and Henry Lo
 Section: LBL A2 (60696)
 
 Copied code includes code taught in class such as the function WaitOnSerial3(), and arduino library.
